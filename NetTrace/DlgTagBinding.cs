@@ -13,7 +13,7 @@ namespace NetTrace
         // Description of tag
         public string? StrDesc { get; }
         // The enum this tag belongs to
-        public Type TpEnum { get; }
+        public Type EnumType { get; }
         // The string to use in the dialog
         public string StrTag { get; }
         // Color of the tag
@@ -61,11 +61,11 @@ namespace NetTrace
         #endregion
 
         #region Constructor
-        public DlgTagBinding(string strTag, bool fOn, string? strDesc, Type tpEnum)
+        public DlgTagBinding(string strTag, bool fOn, string? strDesc, Type enumType)
         {
             FOn = fOn;
             StrDesc = strDesc;
-            TpEnum = tpEnum;
+            EnumType = enumType;
             StrTag = strTag;
             _color = new SolidColorBrush(Colors.Black);
         }

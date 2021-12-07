@@ -33,11 +33,11 @@ namespace NetTrace
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>	Gets the TraceTypeInfo for the current enum trace type. </summary>
+        /// <summary>	Gets the EnumInfo for the current enum trace type. </summary>
         ///
-        /// <value>	The current TraceTypeInfo. </value>
+        /// <value>	The current EnumInfo. </value>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        internal TraceTypeInfo TtiCur => NetTrace.TtiFromType(Tags.LstTraceTagEnums[lbEnums.SelectedIndex]);
+        internal EnumInfo TtiCur => NetTrace.TtiFromType(Tags.LstEnums[lbEnums.SelectedIndex]);
         #endregion
 
         #region Private variables
@@ -46,31 +46,35 @@ namespace NetTrace
         #endregion
 
         #region Constructor
-#pragma warning disable CS8618
-        public TraceDialog()
-#pragma warning restore CS8618
+        public TraceDialog(Dictionary<string, DlgTagBinding> tagNameToBindingDictionary)
         {
+            // Allocate our bindings
+
+            // Binding for all tags
             TagList = new ObservableCollection<DlgTagBinding>();
+
+            // Binding for enums
             EnumsList = new ObservableCollection<string>();
+
+            // We have to initialize component here or our dialog variables will be unset
             InitializeComponent();
-        }
-        public TraceDialog(Dictionary<string, DlgTagBinding> dctNamesToStatus)
-            : this()
-        {
+
             EnumTagColor = new SolidColorBrush((Color)Resources["EnumTagColor"]);
             NormalTagColor = new SolidColorBrush((Color)Resources["NormalTagColor"]);
 
             ShowInTaskbar = false;
-            Tags.DctNamesToBinding = new Dictionary<string, DlgTagBinding>(dctNamesToStatus);
+            Tags.DctNamesToBinding = new Dictionary<string, DlgTagBinding>(tagNameToBindingDictionary);
 
-            Tags.Init(dctNamesToStatus);
-            foreach (string strTag in dctNamesToStatus.Keys)
+            // Set up the list the dialog binds to for the enum list
+            Tags.BindEnums(tagNameToBindingDictionary);
+
+            foreach (var strTag in tagNameToBindingDictionary.Keys)
             {
                 TagList.Add(Tags.DctNamesToBinding[strTag]);
             }
             lbTags.ItemsSource = TagList;
 
-            foreach (Type tp in Tags.LstTraceTagEnums)
+            foreach (var tp in Tags.LstEnums)
             {
                 EnumsList.Add(Tags.StrDescFromTp(tp));
             }
@@ -97,9 +101,9 @@ namespace NetTrace
 
         private void SetEnumTags(bool fOn)
         {
-            var tp = Tags.LstTraceTagEnums[lbEnums.SelectedIndex];
+            var tp = Tags.LstEnums[lbEnums.SelectedIndex];
 
-            foreach (var tsad in TagList.Where(t => t.TpEnum == tp))
+            foreach (var tsad in TagList.Where(t => t.EnumType == tp))
             {
                 tsad.FOn = fOn;
             }

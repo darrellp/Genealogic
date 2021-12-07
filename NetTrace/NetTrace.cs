@@ -24,14 +24,14 @@ namespace NetTrace
         /// The following hash table maps types to their type info structures.  This is done so that various
         /// projects can have their own tracing info/structures/config files.
         /// </summary>
-        private static readonly Dictionary<Type, TraceTypeInfo> DctTypeToTypeInfo = new();
+        private static readonly Dictionary<Type, EnumInfo> DctTypeToTypeInfo = new();
 
         /// <summary>
-        /// s_htTagNameToTraceTypeInfo maps trace tag names to the TraceTypeInfo structure
+        /// s_htTagNameToTraceTypeInfo maps trace tag names to the EnumInfo structure
         /// for that type which contains the status of it's individual trace tags, etc..  We need names so
         /// that we can deal with the names in the listbox of the trace dialog.
         /// </summary>
-        private static readonly Dictionary<string, TraceTypeInfo> DctTagNameToTraceTypeInfo = new();
+        private static readonly Dictionary<string, EnumInfo> DctTagNameToTraceTypeInfo = new();
 
         /// <summary>
         /// All the assemblies referenced by the current assembly
@@ -87,13 +87,13 @@ namespace NetTrace
 
         #region Tags Dialog
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>	Return all the TraceTypeInfo objects for all registered TraceTags enums. </summary>
+        /// <summary>	Return all the EnumInfo objects for all registered TraceTags enums. </summary>
         ///
         /// <remarks>	Darrellp, 10/5/2012. </remarks>
         ///
-        /// <returns>	ICollection of TraceTypeInfo. </returns>
+        /// <returns>	ICollection of EnumInfo. </returns>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        private static IEnumerable<TraceTypeInfo> AllTraceTypeInfos()
+        private static IEnumerable<EnumInfo> AllEnumInfos()
         {
             return DctTypeToTypeInfo.Values;
         }
@@ -101,9 +101,9 @@ namespace NetTrace
         // ReSharper disable once UnusedMember.Local
         private static void SaveTtiInfo()
         {
-            // Tell each TraceTypeInfo to hold its current data so we can restore it in case the
+            // Tell each EnumInfo to hold its current data so we can restore it in case the
             // user hits cancel...
-            foreach (TraceTypeInfo tti in AllTraceTypeInfos())
+            foreach (var tti in AllEnumInfos())
             {
                 tti.SetHeld();
             }
@@ -115,42 +115,42 @@ namespace NetTrace
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>	Returns a hash table mapping all registered tag names to their current status. </summary>
+        /// <summary>	Returns a hash table mapping all registered tag names to their dialog binding info. </summary>
         ///
         /// <remarks>	Darrellp, 10/5/2012. </remarks>
         ///
         /// <returns>	Hashtable. </returns>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        private static Dictionary<string, DlgTagBinding> GetGlobalNamesStatusDictionary()
+        private static Dictionary<string, DlgTagBinding> TagNameToBindingDictionary()
         {
-            var dctNamesToStatus = new Dictionary<string, DlgTagBinding>();
+            var tagNameToBindingDictionary = new Dictionary<string, DlgTagBinding>();
 
-            foreach (TraceTypeInfo tti in AllTraceTypeInfos())
+            foreach (var enumInfo in AllEnumInfos())
             {
-                foreach (var objEnum in Enum.GetValues(tti.Tp))
+                foreach (var tag in Enum.GetValues(enumInfo.EnumType))
                 {
-                    string strTag = GetFullName(tti.Tp, objEnum);
-                    dctNamesToStatus[strTag] =
+                    var strTag = GetFullName(enumInfo.EnumType, tag);
+                    tagNameToBindingDictionary[strTag] =
                         new DlgTagBinding(strTag,
-                            tti.GetTagNameStatus(strTag),
-                            tti.StrDescFromTagName(strTag),
-                            tti.Tp);
+                            enumInfo.GetTagNameStatus(strTag),
+                            enumInfo.StrDescFromTagName(strTag),
+                            enumInfo.EnumType);
                 }
             }
 
-            return dctNamesToStatus;
+            return tagNameToBindingDictionary;
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>	Retrieves the TraceTypeInfo from the tag name. </summary>
+        /// <summary>	Retrieves the EnumInfo from the Enum name. </summary>
         ///
         /// <remarks>	Darrellp, 10/5/2012. </remarks>
         ///
-        /// <param name="strTag">	Tag name. </param>
+        /// <param name="strTag">	Enum name. </param>
         ///
-        /// <returns>	TraceTypeInfo for the tag name. </returns>
+        /// <returns>	EnumInfo for the tag name. </returns>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        private static TraceTypeInfo TtiFromTagName(string strTag)
+        private static EnumInfo TtiFromTagName(string strTag)
         {
             return DctTagNameToTraceTypeInfo[strTag];
         }
@@ -161,20 +161,33 @@ namespace NetTrace
         /// <remarks>	Darrellp, 10/5/2012. </remarks>
         ///
         /// <param name="strTag">	Trace tag. </param>
-        /// <param name="tti">		It's TraceTypeInfo. </param>
+        /// <param name="tti">		It's EnumInfo. </param>
         /// <param name="fOn">		True turns it on, false turns it off. </param>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        private static void SetTracing(string strTag, TraceTypeInfo tti, bool fOn)
+        private static void SetTracing(string strTag, EnumInfo tti, bool fOn)
         {
             tti.SetTagNameStatus(strTag, fOn);
         }
 
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// <summary>   Put up the race dialog. </summary>
+        ///
+        /// <remarks>   Darrell Plank, 12/6/2021. </remarks>
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
         public void TraceDialog()
         {
+            // I used to be the one who decided where tags wrote to, printed their time stamps, etc..
+            // This stuff has been taken over by the logger (preferably Serilogger) that we just use
+            // as a service.  I had this stuff available on a tag by tag basis and TtiInfo was the
+            // place they were stored.  Now that I'm no longer responsible for them I don't need this
+            // stuff but I'm leaving it commented out because I may want to put some sort of info in
+            // in the future - for instance, right now I only print out informational messages but I
+            // may change my mind about that in the future.
+            
             // try
             // {
-                // SaveTtiInfo();
-            var traceDialog = new TraceDialog(GetGlobalNamesStatusDictionary());
+            //      SaveTtiInfo();
+            var traceDialog = new TraceDialog(TagNameToBindingDictionary());
             var fOk = traceDialog.ShowDialog();
 
             // If they hit cancel or closed out then forget everything
@@ -194,7 +207,7 @@ namespace NetTrace
             }
 
             // Persist the changes
-            foreach (var tti in AllTraceTypeInfos())
+            foreach (var tti in AllEnumInfos())
             {
                 tti.SaveToPersistData(_config);
             }
@@ -219,8 +232,15 @@ namespace NetTrace
             return TtiFromTag(tag).GetTagStatus(tag);
         }
 
-         public void Trace(object tag, string str, params object[] arobjParm)
-         {
+        /// <summary>
+        /// Prints out the message if the tag has tracing enabled
+        /// </summary>
+        /// 
+        /// <param name="tag">The tag which enables or disables tracing</param>
+        /// <param name="str">Serilog style message string</param>
+        /// <param name="arobjParm">Serilog style objects to print</param>
+        public void Trace(object tag, string str, params object[] arobjParm)
+        {
             if (FTracing(tag))
             {
                 _log.Information("({tag}): " + str, tag, arobjParm);
@@ -230,11 +250,11 @@ namespace NetTrace
 
         #region TTI Info
         /// <summary>
-        /// Retrieves the TraceTypeInfo from the tag object
+        /// Retrieves the EnumInfo from the tag object
         /// </summary>
         /// <param name="objTag">Tag object</param>
-        /// <returns>TraceTypeInfo for the tag object</returns>
-        private static TraceTypeInfo TtiFromTag(object objTag)
+        /// <returns>EnumInfo for the tag object</returns>
+        private static EnumInfo TtiFromTag(object objTag)
         {
             return DctTypeToTypeInfo[objTag.GetType()];
         }
@@ -249,15 +269,15 @@ namespace NetTrace
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>	Return the TraceTypeInfo for a given enum type. </summary>
+        /// <summary>	Return the EnumInfo for a given enum type. </summary>
         ///
         /// <remarks>	Darrellp, 10/5/2012. </remarks>
         ///
         /// <param name="tp">	The enum type. </param>
         ///
-        /// <returns>	The TraceTypeInfo for tp. </returns>
+        /// <returns>	The EnumInfo for enumType. </returns>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        internal static TraceTypeInfo TtiFromType(Type tp)
+        internal static EnumInfo TtiFromType(Type tp)
         {
             return DctTypeToTypeInfo[tp];
         }
@@ -323,30 +343,30 @@ namespace NetTrace
         }
 
         /// <summary>
-        /// Register a TraceTags enum and return it's TraceTypeInfo
+        /// Register a TraceTags enum and return it's EnumInfo
         /// </summary>
         /// <param name="tp">TraceTags enum to register</param>
-        /// <returns>TraceTypeInfo for newly registered TraceTags enum</returns>
-        private static TraceTypeInfo TtiRegisterType(Type tp)
+        /// <returns>EnumInfo for newly registered TraceTags enum</returns>
+        private static EnumInfo TtiRegisterType(Type tp)
         {
-            TraceTypeInfo tti = new(tp);
+            EnumInfo tti = new(tp);
             DctTypeToTypeInfo.Add(tp, tti);
             return tti;
         }
 
         /// <summary>
-        /// Get the TraceTypeInfo for a TraceTags enum
+        /// Get the EnumInfo for a TraceTags enum
         /// </summary>
         /// <param name="tp">Enum to return info for</param>
-        /// <returns>TraceTypeInfo for this enum</returns>
-        private static TraceTypeInfo TtiFromTp(Type tp)
+        /// <returns>EnumInfo for this enum</returns>
+        private static EnumInfo TtiFromTp(Type tp)
         {
             return FTypeRegistered(tp) ? DctTypeToTypeInfo[tp] : TtiRegisterType(tp);
         }
 
         /// <summary>
         /// Load all the tags in an enum type.  "Loading" in this sense means looking at all the trace tag
-        /// labeled enums in the assembly (or assemblies), setting up TraceTypeInfo structures for each of
+        /// labeled enums in the assembly (or assemblies), setting up EnumInfo structures for each of
         /// them and setting all their tags, either to true if they're not currently in the persist data or
         /// whatever value the persist data has for them if they are.
         /// </summary>
@@ -368,8 +388,8 @@ namespace NetTrace
                 // Initially set to true.  This will take care of any tags which
                 // haven't been previously registered and set them to true.  Any
                 // tags in the persist data will overwrite this value in LoadFromPersistData.
-                tti.SetTagNameStatus(GetFullName(tti.Tp, objEnum), true);
-                //var fullName = tti.Tp.FullName + "." + objEnum;
+                tti.SetTagNameStatus(GetFullName(tti.EnumType, objEnum), true);
+                //var fullName = tti.EnumType.FullName + "." + objEnum;
                 //tti.SetTagNameStatus(fullName, true);
             }
 

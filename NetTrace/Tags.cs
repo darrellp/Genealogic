@@ -13,18 +13,27 @@ namespace NetTrace
         internal static Dictionary<string, DlgTagBinding>? DctNamesToBinding;
 
         /// <summary>
-        /// List of trace tag enum types
+        /// List of trace tag enums which the dialog binds to
         /// </summary>
-        internal static readonly List<Type> LstTraceTagEnums = new();
+        internal static readonly List<Type> LstEnums = new();
 
-        internal static void Init(Dictionary<string, DlgTagBinding> dctNamesToBindings)
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// <summary>   Finds all enums and places them in LstEnums which the dialog binds to. </summary>
+        ///
+        /// <remarks>   Darrell Plank, 12/6/2021. </remarks>
+        ///
+        /// <param name="tagNameToBindingDictionary">   Dictionary of tag name to bindings. </param>
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        internal static void BindEnums(Dictionary<string, DlgTagBinding> tagNameToBindingDictionary)
         {
             Debug.Assert(DctNamesToBinding != null);
-            foreach (var binding in dctNamesToBindings.Keys
+            // Use a hashset to ensure uniqueness?
+            foreach (var binding in tagNameToBindingDictionary.Keys
                          .Select(strTag => DctNamesToBinding[strTag])
-                         .Where(binding => LstTraceTagEnums.All(tp => binding.TpEnum != tp)))
+                         .Where(binding => LstEnums.All(tp => binding.EnumType != tp)))
             {
-                LstTraceTagEnums.Add(binding.TpEnum);
+                LstEnums.Add(binding.EnumType);
             }
         }
 
@@ -43,7 +52,7 @@ namespace NetTrace
                     strRet = enumDescAttribute.StrDesc;
                 }
             }
-            return strRet ?? (TraceTypeInfo.StrCanonicalTypeName(tp));
+            return strRet ?? (EnumInfo.StrCanonicalTypeName(tp));
         }
     }
 }

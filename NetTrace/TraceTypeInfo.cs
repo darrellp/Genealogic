@@ -6,40 +6,40 @@ using Microsoft.Extensions.Configuration;
 namespace NetTrace
 {
 	/// <summary>
-	/// Each individual [TraceTags] enum type in the assembly is mapped one to one to a TraceTypeInfo object.
+	/// Each individual [TraceTags] enum type in the assembly is mapped one to one to an EnumInfo object.
 	/// This object holds the status of each member of that enum (turned on or off) and the information pertaining
 	/// to that enum in general.
 	/// </summary>
-	internal class TraceTypeInfo
+	internal class EnumInfo
 	{
 		#region Private variables
 		/// <summary>
 		/// Hashtable which maps members of this enum to their status (on/off)
 		/// </summary>
-		private readonly Dictionary<string, bool> _dctTagNameToStatus = new();
+		private readonly Dictionary<string, bool> _dctTagNameToEnabled = new();
 
 		/// <summary>
 		/// Maps actual tag (rather than the tag name) to it's status.  This table is redundant
 		/// and is only here to speed up Trace calls.
 		/// </summary>
-		private readonly Dictionary<object, bool> _dctTagToStatus = new();
+		private readonly Dictionary<object, bool> _dctTagToEnabled = new();
 
 		/// <summary>
 		/// Mapping from tag names to their descriptions
 		/// </summary>
-		private readonly Dictionary<string, string> _DctDescs = new();
+		private readonly Dictionary<string, string> _dctDescs = new();
 
         /// <summary>
-        /// TraceTags enum type for the tags in this TraceTypeInfo
+        /// Enum type for the tags in this EnumInfo
         /// </summary>
-        private readonly Type _tp;
+        private readonly Type _enumType;
 
         /// <summary>
         /// TraceSettings structure which persists our data to user.config.
         /// </summary>
         private static TraceSettings? _traceSettings;
 
-        public Type Tp => _tp;
+        public Type EnumType => _enumType;
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>	
@@ -60,7 +60,7 @@ namespace NetTrace
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>	
-        /// Retrieves the TraceTagEnum object for this TraceTypeInfo from the persistence data. 
+        /// Retrieves the TraceTagEnum object for this EnumInfo from the persistence data. 
         /// </summary>
         ///
         /// <remarks>	Darrellp, 10/5/2012. </remarks>
@@ -70,12 +70,12 @@ namespace NetTrace
         TraceTagEnum? TraceTagEnumFromTraceSettings()
         {
             _traceSettings ??= new TraceSettings();
-            var canonicalName = StrCanonicalTypeName(_tp);
+            var canonicalName = StrCanonicalTypeName(_enumType);
             return _traceSettings.TagEnums.Find(tteTest => tteTest.StrName == canonicalName);
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-		/// <summary>	Save this TraceTypeInfo to persistent data. </summary>
+		/// <summary>	Save this EnumInfo to persistent data. </summary>
 		///
 		/// <remarks>	Darrellp, 10/5/2012. </remarks>
 		////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -84,28 +84,27 @@ namespace NetTrace
             var tte = TraceTagEnumFromTraceSettings();
             if (tte == null)
             {
-                tte = new TraceTagEnum { StrName = TraceTypeInfo.StrCanonicalTypeName(_tp) };
-                TraceTypeInfo._traceSettings?.TagEnums.Add(tte);
+                tte = new TraceTagEnum(StrCanonicalTypeName(_enumType), _dctTagNameToEnabled.Count);
+                _traceSettings?.TagEnums.Add(tte);
             }
-            tte.ArttTags = new TraceTag[_dctTagNameToStatus.Count];
             var iTag = 0;
-            foreach (var strTag in _dctTagNameToStatus.Keys)
+            foreach (var strTag in _dctTagNameToEnabled.Keys)
             {
                 tte.ArttTags[iTag] = new TraceTag { StrName = strTag };
-                tte.ArttTags[iTag++].FOn = _dctTagNameToStatus[strTag];
+                tte.ArttTags[iTag++].FOn = _dctTagNameToEnabled[strTag];
             }
         }
 
         public void ChangeTagNameStatus(String strTag, bool fOn)
         {
-            if (_dctTagNameToStatus.ContainsKey(strTag))
+            if (_dctTagNameToEnabled.ContainsKey(strTag))
             {
                 SetTagNameStatus(strTag, fOn);
             }
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>	Load this TraceTypeInfo from persist data. </summary>
+        /// <summary>	Load this EnumInfo from persist data. </summary>
         ///
         /// <remarks>	Darrellp, 10/5/2012. </remarks>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -127,21 +126,21 @@ namespace NetTrace
         {
             string? strRet = null;
 
-            if (_DctDescs.ContainsKey(strTag))
+            if (_dctDescs.ContainsKey(strTag))
             {
-                strRet = _DctDescs[strTag];
+                strRet = _dctDescs[strTag];
             }
             return strRet;
         }
 
         public bool GetTagNameStatus(String strTag)
         {
-            return _dctTagNameToStatus[strTag];
+            return _dctTagNameToEnabled[strTag];
         }
 
 		/// <summary>
 		/// In order to accommodate the Cancel button cancelling all changes we have two copies of
-		/// the general parameters for the TraceTypeInfo.  The HeldInfo property returns the proper
+		/// the general parameters for the EnumInfo.  The HeldInfo property returns the proper
 		/// one based on _fHolding.  Before the trace dialog, SetHeld is called which copies the
 		/// "real" data from _hiReal to the held data in _hiHeld.  This is the data used during
 		/// the dialog.  If the user hits OK in that dialog then the held data is copied back into the
@@ -156,9 +155,9 @@ namespace NetTrace
 
 		public void SetDescs()
 		{
-			foreach (Enum tag in Enum.GetValues(_tp))
+			foreach (Enum tag in Enum.GetValues(_enumType))
 			{
-				var fi = _tp.GetField(tag.ToString());
+				var fi = _enumType.GetField(tag.ToString());
                 if (fi == null)
                 {
                     continue;
@@ -168,16 +167,16 @@ namespace NetTrace
 					typeof(TagDescAttribute), false);
 				if (arattr.Length > 0)
 				{
-					_DctDescs[NetTrace.GetFullName(_tp, tag)] = arattr[0].StrDesc;
+					_dctDescs[NetTrace.GetFullName(_enumType, tag)] = arattr[0].StrDesc;
 				}
 			}
 		}
 
 		public void SetTagNameStatus(String strTag, bool fOn)
 		{
-                object objTag = Enum.Parse(_tp, ShortTagName(strTag));
-                _dctTagNameToStatus[strTag] = fOn;
-			    _dctTagToStatus[objTag] = fOn;
+                object objTag = Enum.Parse(_enumType, ShortTagName(strTag));
+                _dctTagNameToEnabled[strTag] = fOn;
+			    _dctTagToEnabled[objTag] = fOn;
 		}
 
         private string ShortTagName(string strTag)
@@ -192,7 +191,7 @@ namespace NetTrace
 		private TraceTrigger m_ttfn;
 		/// <summary>
 		/// In order to accommodate the Cancel button cancelling all changes we have two copies of
-		/// the general parameters for the TraceTypeInfo.  The HeldInfo property returns the proper
+		/// the general parameters for the EnumInfo.  The HeldInfo property returns the proper
 		/// one based on m_fHolding.  Before the trace dialog, SetHeld is called which copies the
 		/// "real" data from m_hiReal to the held data in m_hiHeld.  This is the data used during
 		/// the dialog.  If the user hits OK in that dialog then the held data is copied back into the
@@ -206,22 +205,22 @@ namespace NetTrace
 
         #endregion
 
-        public IEnumerable<string> TagNames => _dctTagNameToStatus.Keys;
+        public IEnumerable<string> TagNames => _dctTagNameToEnabled.Keys;
 
         #region Constructors / Loaders
 		/// <summary>
-		/// Constructs a new TraceTypeInfo based on the TraceTags enum type passed in
+		/// Constructs a new EnumInfo based on the TraceTags enum type passed in
 		/// </summary>
-		/// <param name="tp">Enum holding the trace tags for this TraceTypeInfo objects</param>
-		public TraceTypeInfo(Type tp)
+		/// <param name="enumType">Enum holding the trace tags for this EnumInfo objects</param>
+		public EnumInfo(Type enumType)
 		{
-			_tp = tp;
+			_enumType = enumType;
 		}
 		#endregion
 
         public bool GetTagStatus(object objTag)
         {
-            return _dctTagToStatus[objTag];
+            return _dctTagToEnabled[objTag];
         }
     #region Internal classes
     internal class HeldInfo
