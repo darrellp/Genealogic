@@ -46,7 +46,7 @@ namespace NetTrace
         #endregion
 
         #region Constructor
-        public TraceDialog(Dictionary<string, DlgTagBinding> tagNameToBindingDictionary)
+        public TraceDialog()
         {
             // Allocate our bindings
 
@@ -63,14 +63,14 @@ namespace NetTrace
             NormalTagColor = new SolidColorBrush((Color)Resources["NormalTagColor"]);
 
             ShowInTaskbar = false;
-            Tags.DctNamesToBinding = new Dictionary<string, DlgTagBinding>(tagNameToBindingDictionary);
+            Tags.DctNamesToBinding = NetTrace.TagNameToBindingDictionary();
 
-            // Set up the list the dialog binds to for the enum list
-            Tags.BindEnums(tagNameToBindingDictionary);
+            // Initialize the list the dialog binds to for the enum list
+            Tags.BindEnums(Tags.DctNamesToBinding);
 
-            foreach (var strTag in tagNameToBindingDictionary.Keys)
+            foreach (var binding in Tags.DctNamesToBinding.Values)
             {
-                TagList.Add(Tags.DctNamesToBinding[strTag]);
+                TagList.Add(binding);
             }
             lbTags.ItemsSource = TagList;
 

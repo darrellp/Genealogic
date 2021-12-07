@@ -98,6 +98,9 @@ namespace NetTrace
             return DctTypeToTypeInfo.Values;
         }
 
+        // Keeping this in because I may use it in the future if I decide to have more mutable data
+        // about individual tags
+ 
         // ReSharper disable once UnusedMember.Local
         private static void SaveTtiInfo()
         {
@@ -121,7 +124,7 @@ namespace NetTrace
         ///
         /// <returns>	Hashtable. </returns>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        private static Dictionary<string, DlgTagBinding> TagNameToBindingDictionary()
+        internal static Dictionary<string, DlgTagBinding> TagNameToBindingDictionary()
         {
             var tagNameToBindingDictionary = new Dictionary<string, DlgTagBinding>();
 
@@ -177,7 +180,7 @@ namespace NetTrace
         public void TraceDialog()
         {
             // I used to be the one who decided where tags wrote to, printed their time stamps, etc..
-            // This stuff has been taken over by the logger (preferably Serilogger) that we just use
+            // This stuff has been taken over by the logger (preferably Serilog) that we just use
             // as a service.  I had this stuff available on a tag by tag basis and TtiInfo was the
             // place they were stored.  Now that I'm no longer responsible for them I don't need this
             // stuff but I'm leaving it commented out because I may want to put some sort of info in
@@ -187,7 +190,7 @@ namespace NetTrace
             // try
             // {
             //      SaveTtiInfo();
-            var traceDialog = new TraceDialog(TagNameToBindingDictionary());
+            var traceDialog = new TraceDialog();
             var fOk = traceDialog.ShowDialog();
 
             // If they hit cancel or closed out then forget everything
