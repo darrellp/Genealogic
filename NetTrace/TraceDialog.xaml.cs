@@ -28,7 +28,7 @@ namespace NetTrace
         {
             get
             {
-                return Tags.DctNamesToStatus.Keys;
+                return Tags.DctNamesToBinding.Keys;
             }
         }
 
@@ -37,7 +37,7 @@ namespace NetTrace
         ///
         /// <value>	The current TraceTypeInfo. </value>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        internal TraceTypeInfo TtiCur => NetTrace.TtiFromType(Tags.LsttpEnums[lbEnums.SelectedIndex]);
+        internal TraceTypeInfo TtiCur => NetTrace.TtiFromType(Tags.LstTraceTagEnums[lbEnums.SelectedIndex]);
         #endregion
 
         #region Private variables
@@ -61,16 +61,16 @@ namespace NetTrace
             NormalTagColor = new SolidColorBrush((Color)Resources["NormalTagColor"]);
 
             ShowInTaskbar = false;
-            Tags.DctNamesToStatus = new Dictionary<string, DlgTagBinding>(dctNamesToStatus);
+            Tags.DctNamesToBinding = new Dictionary<string, DlgTagBinding>(dctNamesToStatus);
 
             Tags.Init(dctNamesToStatus);
             foreach (string strTag in dctNamesToStatus.Keys)
             {
-                TagList.Add(Tags.DctNamesToStatus[strTag]);
+                TagList.Add(Tags.DctNamesToBinding[strTag]);
             }
             lbTags.ItemsSource = TagList;
 
-            foreach (Type tp in Tags.LsttpEnums)
+            foreach (Type tp in Tags.LstTraceTagEnums)
             {
                 EnumsList.Add(Tags.StrDescFromTp(tp));
             }
@@ -92,12 +92,12 @@ namespace NetTrace
         /// ### <param name="strTag">	Tag name being queried. </param>
         /// ### <returns>	Whether the dialog has that tag turned on or off. </returns>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        public bool this[string strTag] => Tags.DctNamesToStatus[strTag].FOn;
+        public bool this[string strTag] => Tags.DctNamesToBinding[strTag].FOn;
         #endregion
 
         private void SetEnumTags(bool fOn)
         {
-            var tp = Tags.LsttpEnums[lbEnums.SelectedIndex];
+            var tp = Tags.LstTraceTagEnums[lbEnums.SelectedIndex];
 
             foreach (var tsad in TagList.Where(t => t.TpEnum == tp))
             {

@@ -168,7 +168,7 @@ namespace NetTrace
 					typeof(TagDescAttribute), false);
 				if (arattr.Length > 0)
 				{
-					_DctDescs[NetTrace.GetFullName(_tp, tag)] = arattr[0].strDesc;
+					_DctDescs[NetTrace.GetFullName(_tp, tag)] = arattr[0].StrDesc;
 				}
 			}
 		}

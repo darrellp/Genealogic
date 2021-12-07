@@ -36,7 +36,7 @@ namespace NetTrace
         /// <summary>
         /// All the assemblies referenced by the current assembly
         /// </summary>
-        private static readonly List<Assembly> LstAsms = new();
+        private static readonly List<Assembly> LstAssemblies = new();
 
         private static ILogger _log;
         private static IConfiguration _config;
@@ -171,38 +171,38 @@ namespace NetTrace
 
         public void TraceDialog()
         {
-            bool? fOk = false;
-            try
-            {
+            // try
+            // {
                 // SaveTtiInfo();
-                var tdlg = new TraceDialog(GetGlobalNamesStatusDictionary());
-                fOk = tdlg.ShowDialog();
-                if (fOk ?? false)
+            var traceDialog = new TraceDialog(GetGlobalNamesStatusDictionary());
+            var fOk = traceDialog.ShowDialog();
+
+            // If they hit cancel or closed out then forget everything
+            if (!(fOk ?? false)) return;
+
+            // Reset any tags whose values have changed 
+            foreach (var tagInfo in traceDialog.TagList)
+            {
+                var strTag = tagInfo.StrTag;
+                var tti = TtiFromTagName(strTag);
+                var fOn = traceDialog[strTag];
+
+                if (tti.GetTagNameStatus(strTag) != fOn)
                 {
-                    // Reset any tags whose values have changed 
-                    foreach (var tagInfo in tdlg.TagList)
-                    {
-                        var strTag = tagInfo.StrTag;
-                        var tti = TtiFromTagName(strTag);
-                        var fOn = tdlg[strTag];
-
-                        if (tti.GetTagNameStatus(strTag) != fOn)
-                        {
-                            SetTracing(strTag, tti, fOn);
-                        }
-                    }
-
-                    // Persist the changes
-                    foreach (TraceTypeInfo tti in AllTraceTypeInfos())
-                    {
-                        tti.SaveToPersistData(_config);
-                    }
+                    SetTracing(strTag, tti, fOn);
                 }
             }
-            finally
+
+            // Persist the changes
+            foreach (var tti in AllTraceTypeInfos())
             {
-                //RestoreTtiInfo(fOk ?? false);
+                tti.SaveToPersistData(_config);
             }
+            // }
+            //finally
+            //{
+            //    //RestoreTtiInfo(fOk ?? false);
+            //}
 
         }
         #endregion
@@ -280,11 +280,11 @@ namespace NetTrace
                 strName != "PresentationCore" &&
                 strName != "DirectWriteForwarder" &&
                 strName != "UIAutomationTypes" &&
-                !LstAsms.Contains(asm);
+                !LstAssemblies.Contains(asm);
             if (fRet)
             {
                 Debug.WriteLine($"Checking {asm.FullName}");
-                LstAsms.Add(asm);
+                LstAssemblies.Add(asm);
             }
             return fRet;
         }
@@ -341,28 +341,18 @@ namespace NetTrace
         /// <returns>TraceTypeInfo for this enum</returns>
         private static TraceTypeInfo TtiFromTp(Type tp)
         {
-            TraceTypeInfo tti;
-
-            if (!FTypeRegistered(tp))
-            {
-                tti = TtiRegisterType(tp);
-            }
-            else
-            {
-                tti = DctTypeToTypeInfo[tp];
-            }
-            return tti;
+            return FTypeRegistered(tp) ? DctTypeToTypeInfo[tp] : TtiRegisterType(tp);
         }
-
 
         /// <summary>
         /// Load all the tags in an enum type.  "Loading" in this sense means looking at all the trace tag
-        /// labelled enums in the assembly (or assemblies), setting up TraceTypeInfo structures for each of
+        /// labeled enums in the assembly (or assemblies), setting up TraceTypeInfo structures for each of
         /// them and setting all their tags, either to true if they're not currently in the persist data or
         /// whatever value the persist data has for them if they are.
         /// </summary>
+        /// 
         /// <param name="tp">enum type whose tags will be loaded</param>
-        static void LoadTags(Type tp)
+        private static void LoadTags(Type tp)
         {
             if (!tp.IsEnum)
             {
@@ -370,24 +360,17 @@ namespace NetTrace
             }
 
             var tti = TtiFromTp(tp);
-            try
+            foreach (var objEnum in Enum.GetValues(tp))
             {
-                foreach (var objEnum in Enum.GetValues(tp))
-                {
-                    var strFullName = GetFullName(tp, objEnum) ?? "";
-                    DctTagNameToTraceTypeInfo[strFullName] = tti;
+                var strFullName = GetFullName(tp, objEnum);
+                DctTagNameToTraceTypeInfo[strFullName] = tti;
 
-                    // Initially set to true.  This will take care of any tags which
-                    // haven't been previously registered and set them to true.  Any
-                    // tags in the persist data will overwrite this value in LoadFromPersistData.
-                    tti.SetTagNameStatus(GetFullName(tti.Tp, objEnum) ?? "", true);
-                    //var fullName = tti.Tp.FullName + "." + objEnum ?? "";
-                    //tti.SetTagNameStatus(fullName, true);
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("oops");
+                // Initially set to true.  This will take care of any tags which
+                // haven't been previously registered and set them to true.  Any
+                // tags in the persist data will overwrite this value in LoadFromPersistData.
+                tti.SetTagNameStatus(GetFullName(tti.Tp, objEnum), true);
+                //var fullName = tti.Tp.FullName + "." + objEnum;
+                //tti.SetTagNameStatus(fullName, true);
             }
 
             // Get any values in the persist data, overriding the "true" value set above.
@@ -427,10 +410,10 @@ namespace NetTrace
     {
         public TagDescAttribute(string strDesc)
         {
-            this.strDesc = strDesc;
+            this.StrDesc = strDesc;
         }
 
-        public string strDesc { get; }
+        public string StrDesc { get; }
     }
     #endregion
 }

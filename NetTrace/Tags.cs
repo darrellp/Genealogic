@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NetTrace
 {
@@ -11,23 +10,21 @@ namespace NetTrace
         /// <summary>
         /// Dictionary which keeps all our tag information
         /// </summary>
-        internal static Dictionary<string, DlgTagBinding> DctNamesToStatus;
+        internal static Dictionary<string, DlgTagBinding>? DctNamesToBinding;
 
         /// <summary>
         /// List of trace tag enum types
         /// </summary>
-        internal static readonly List<Type> LsttpEnums = new List<Type>();
+        internal static readonly List<Type> LstTraceTagEnums = new();
 
-        internal static void Init(Dictionary<string, DlgTagBinding> dctNamesToStatus)
+        internal static void Init(Dictionary<string, DlgTagBinding> dctNamesToBindings)
         {
-            foreach (string strTag in dctNamesToStatus.Keys)
+            Debug.Assert(DctNamesToBinding != null);
+            foreach (var binding in dctNamesToBindings.Keys
+                         .Select(strTag => DctNamesToBinding[strTag])
+                         .Where(binding => LstTraceTagEnums.All(tp => binding.TpEnum != tp)))
             {
-                DlgTagBinding tsad = DctNamesToStatus[strTag];
-
-                if (LsttpEnums.All(tp => tsad.TpEnum != tp))
-                {
-                    LsttpEnums.Add(tsad.TpEnum);
-                }
+                LstTraceTagEnums.Add(binding.TpEnum);
             }
         }
 
@@ -36,13 +33,12 @@ namespace NetTrace
         /// </summary>
         /// <param name="tp">Enum type we're finding a description for</param>
         /// <returns>descriptive string</returns>
-        internal static String StrDescFromTp(Type tp)
+        internal static string StrDescFromTp(Type tp)
         {
-            string strRet = null;
+            string? strRet = null;
             foreach (var attr in Attribute.GetCustomAttributes(tp))
             {
-                var enumDescAttribute = attr as EnumDescAttribute;
-                if (enumDescAttribute != null)
+                if (attr is EnumDescAttribute enumDescAttribute)
                 {
                     strRet = enumDescAttribute.StrDesc;
                 }
