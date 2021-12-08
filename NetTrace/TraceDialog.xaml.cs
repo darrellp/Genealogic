@@ -106,12 +106,30 @@ namespace NetTrace
             }
         }
 
+        private void SetAllTags(bool fOn)
+        {
+            foreach (var tsad in TagList)
+            {
+                tsad.FOn = fOn;
+            }
+        }
+
         private void BtnAllOnClick(object sender, EventArgs e)
+        {
+            SetAllTags(true);
+        }
+
+        private void BtnAllOffClick(object sender, EventArgs e)
+        {
+            SetAllTags(false);
+        }
+
+        private void BtnEnumOnClick(object sender, EventArgs e)
         {
             SetEnumTags(true);
         }
 
-        private void BtnAllOffClick(object sender, EventArgs e)
+        private void BtnEnumOffClick(object sender, EventArgs e)
         {
             SetEnumTags(false);
         }

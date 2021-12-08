@@ -4,7 +4,8 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       mc:Ignorable="d" 
-      d:DesignHeight="300" d:DesignWidth="400"
+      d:DesignHeight="400" d:DesignWidth="5
+        00"
       Title="TraceDialog" Height="400" Width="500" ResizeMode="NoResize" ShowInTaskbar="False" WindowStyle="None">
 
     <Window.Resources>
@@ -31,7 +32,6 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
-                <ColumnDefinition/>
             </Grid.ColumnDefinitions>
             <ListBox x:Name="lbEnums" SelectionChanged="EnumSelectionChanged"/>
             <Grid Grid.Column="2" x:Name="InfoGrid">
@@ -43,18 +43,17 @@
                     <Grid.RowDefinitions>
                         <RowDefinition/>
                         <RowDefinition/>
-                        <RowDefinition/>
                     </Grid.RowDefinitions>
-                    <Button x:Name="btnAllTagsOn" Click="BtnAllOnClick" Content="All tags on" VerticalAlignment="Center" Margin="10,0"/>
-                    <Button x:Name="btnAllTagsOff" Click="BtnAllOffClick" Content="All Tags Off" VerticalAlignment="Center" Grid.Row="1" Margin="10,0"/>
+                    <Button x:Name="btnEnumTagsOn" Click="BtnEnumOnClick" Content="Enum tags on" VerticalAlignment="Center" Margin="10,0"/>
+                    <Button x:Name="btnEnumTagsOff" Click="BtnEnumOffClick" Content="Enum Tags Off" VerticalAlignment="Center" Grid.Row="1" Margin="10,0"/>
                 </Grid>
                 <Grid Grid.Column="1">
                     <Grid.RowDefinitions>
                         <RowDefinition/>
                         <RowDefinition/>
-                        <RowDefinition/>
-                        <RowDefinition/>
                     </Grid.RowDefinitions>
+                    <Button x:Name="btnAllTagsOn" Click="BtnAllOnClick" Content="All tags on" VerticalAlignment="Center" Margin="10,0"/>
+                    <Button x:Name="btnAllTagsOff" Click="BtnAllOffClick" Content="All Tags Off" VerticalAlignment="Center" Grid.Row="1" Margin="10,0"/>
                 </Grid>
             </Grid>
         </Grid>
@@ -64,8 +63,8 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Button x:Name="btnOkay" HorizontalAlignment="Center" VerticalAlignment="Center" IsDefault="True" Grid.Column="1" Margin="0,0,10,0" Content="Okay" Width="75" Click="BtnOkayClick"/>
-            <Button x:Name="btnCancel" Content="Cancel" HorizontalAlignment="Center" VerticalAlignment="Center" Width="75" Grid.Column="2" IsCancel="True" Margin="0,0,10,0"/>
+            <Button x:Name="btnOkay" HorizontalAlignment="Center" VerticalAlignment="Center" IsDefault="True" Grid.Column="1" Margin="0,0,10,10" Content="Okay" Width="75" Click="BtnOkayClick"/>
+            <Button x:Name="btnCancel" Content="Cancel" HorizontalAlignment="Center" VerticalAlignment="Center" Width="75" Grid.Column="2" IsCancel="True" Margin="0,0,10,10"/>
         </Grid>
     </Grid>
 </Window>
