@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace NetTrace
 {
@@ -37,7 +33,7 @@ namespace NetTrace
         // Enum name
         public readonly string StrName;
         // Trace tag info
-        public TraceTag[] ArttTags;
+        public readonly TraceTag[] ArttTags;
 
         public TraceTagEnum(string strName, int tagCount)
         {
@@ -48,7 +44,7 @@ namespace NetTrace
 
     public class TraceTag
     {
-        public string StrName { get; set; }
+        public string? StrName { get; init; }
         public bool FOn { get; set; }
     }
 }

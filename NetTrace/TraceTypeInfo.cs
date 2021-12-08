@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
 
@@ -118,6 +119,7 @@ namespace NetTrace
 
             foreach (var ttg in tte.ArttTags)
             {
+                Debug.Assert(ttg.StrName != null, "ttg.StrName != null");
                 ChangeTagNameStatus(ttg.StrName, ttg.FOn);
             }
         }
@@ -255,19 +257,21 @@ namespace NetTrace
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// <summary>	
-    /// Set us to use held data rather than the real data and copy our current real data into the
-    /// held. 
-    /// </summary>
-    ///
-    /// <remarks>	Darrellp, 10/5/2012. </remarks>
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    public void SetHeld()
+#if FUTURE
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// <summary>	
+        /// Set us to use held data rather than the real data and copy our current real data into the
+        /// held. 
+        /// </summary>
+        ///
+        /// <remarks>	Darrellp, 10/5/2012. </remarks>
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        public void SetHeld()
     {
         _fHolding = true;
         _hiReal.CopyTo(_hiHeld);
     }
-    #endregion
+#endif
+#endregion
 	}
 }

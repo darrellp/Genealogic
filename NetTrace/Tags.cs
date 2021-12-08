@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace NetTrace
 {
-    internal class Tags
+    internal static class Tags
     {
         /// <summary>
         /// Dictionary which keeps all our tag information

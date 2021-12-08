@@ -21,25 +21,21 @@ namespace NetTrace
     {
         #region Private variables
         /// <summary>
-        /// The following hash table maps types to their type info structures.  This is done so that various
+        /// The following hash table maps enums to their enum info structures.  This is done so that various
         /// projects can have their own tracing info/structures/config files.
         /// </summary>
-        private static readonly Dictionary<Type, EnumInfo> DctTypeToTypeInfo = new();
+        private static readonly Dictionary<Type, EnumInfo> DctEnumToEnumInfo = new();
 
         /// <summary>
-        /// s_htTagNameToTraceTypeInfo maps trace tag names to the EnumInfo structure
+        /// DctTagNameToEnumInfo maps trace tag names to the EnumInfo structure
         /// for that type which contains the status of it's individual trace tags, etc..  We need names so
         /// that we can deal with the names in the listbox of the trace dialog.
         /// </summary>
-        private static readonly Dictionary<string, EnumInfo> DctTagNameToTraceTypeInfo = new();
+        private static readonly Dictionary<string, EnumInfo> DctTagNameToEnumInfo = new();
 
-        /// <summary>
-        /// All the assemblies referenced by the current assembly
-        /// </summary>
-        private static readonly List<Assembly> LstAssemblies = new();
-
-        private static ILogger _log;
-        private static IConfiguration _config;
+        // DI injected services
+        private readonly ILogger _log;
+        private readonly IConfiguration _config;
 
         // ReSharper disable once MemberCanBePrivate.Global
         // ReSharper disable once UnusedAutoPropertyAccessor.Global
@@ -54,9 +50,7 @@ namespace NetTrace
             _config = config;
         }
 
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         static NetTrace()
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             try
             {
@@ -68,7 +62,7 @@ namespace NetTrace
 
                         foreach (var an in asm.GetReferencedAssemblies())
                         {
-                            Assembly asmRef = Assembly.Load(an);
+                            var asmRef = Assembly.Load(an);
                             if (FPerformAsmCheck(asmRef))
                             {
                                 CheckAssemblyForTraceTags(asmRef);
@@ -80,6 +74,7 @@ namespace NetTrace
             }
             catch (Exception)
             {
+                // Probably should throw our own exception here for "NetTraceInitializationFailure" or some such
                 // FStarted == false will be the indication of a failure
             }
         }
@@ -95,13 +90,13 @@ namespace NetTrace
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         private static IEnumerable<EnumInfo> AllEnumInfos()
         {
-            return DctTypeToTypeInfo.Values;
+            return DctEnumToEnumInfo.Values;
         }
 
+#if FUTURE
         // Keeping this in because I may use it in the future if I decide to have more mutable data
         // about individual tags
- 
-        // ReSharper disable once UnusedMember.Local
+
         private static void SaveTtiInfo()
         {
             // Tell each EnumInfo to hold its current data so we can restore it in case the
@@ -111,6 +106,17 @@ namespace NetTrace
                 tti.SetHeld();
             }
         }
+
+        private static void RestoreTtiInfo(bool fOk)
+        {
+            // Copy back either the changed values or the old values depending
+            // on whether the user hit OK or Cancel
+            foreach (var tti in AllEnumInfos())
+            {
+                tti.SetReal(fOk);
+            }
+        }
+#endif
 
         internal static string GetFullName(Type tp, object objEnum)
         {
@@ -122,7 +128,7 @@ namespace NetTrace
         ///
         /// <remarks>	Darrellp, 10/5/2012. </remarks>
         ///
-        /// <returns>	Hashtable. </returns>
+        /// <returns>	Dictionary from full tag names to the dialog bindings for those tags. </returns>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         internal static Dictionary<string, DlgTagBinding> TagNameToBindingDictionary()
         {
@@ -155,7 +161,7 @@ namespace NetTrace
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         private static EnumInfo TtiFromTagName(string strTag)
         {
-            return DctTagNameToTraceTypeInfo[strTag];
+            return DctTagNameToEnumInfo[strTag];
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -191,12 +197,12 @@ namespace NetTrace
             // {
             //      SaveTtiInfo();
             var traceDialog = new TraceDialog();
-            var fOk = traceDialog.ShowDialog();
+            var fOk = traceDialog.ShowDialog() ?? false;
 
             // If they hit cancel or closed out then forget everything
-            if (!(fOk ?? false)) return;
+            if (!fOk) return;
 
-            // Reset any tags whose values have changed 
+            // Otherwise, set any tags whose values have changed 
             foreach (var tagInfo in traceDialog.TagList)
             {
                 var strTag = tagInfo.StrTag;
@@ -217,11 +223,11 @@ namespace NetTrace
             // }
             //finally
             //{
-            //    //RestoreTtiInfo(fOk ?? false);
+            //    RestoreTtiInfo(fOk);
             //}
 
         }
-        #endregion
+#endregion
 
         #region Tracing
         /// <summary>
@@ -259,7 +265,7 @@ namespace NetTrace
         /// <returns>EnumInfo for the tag object</returns>
         private static EnumInfo TtiFromTag(object objTag)
         {
-            return DctTypeToTypeInfo[objTag.GetType()];
+            return DctEnumToEnumInfo[objTag.GetType()];
         }
 
         public void SetTagStatus(object tag, bool fOn)
@@ -282,12 +288,19 @@ namespace NetTrace
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         internal static EnumInfo TtiFromType(Type tp)
         {
-            return DctTypeToTypeInfo[tp];
+            return DctEnumToEnumInfo[tp];
         }
         #endregion
 
         #region Assembly Wrangling
-        static bool FPerformAsmCheck(Assembly asm)
+        /// <summary>
+        /// All the assemblies referenced by the current assembly.  This is only
+        /// used while doing assembly checks to keep from repeating an assembly
+        /// that has already been checked.
+        /// </summary>
+        private static readonly List<Assembly> LstAssemblies = new();
+
+        private static bool FPerformAsmCheck(Assembly asm)
         {
             // Can the null case happen?  I don't think so but if it does
             // give it a name it will reject
@@ -306,7 +319,6 @@ namespace NetTrace
                 !LstAssemblies.Contains(asm);
             if (fRet)
             {
-                Debug.WriteLine($"Checking {asm.FullName}");
                 LstAssemblies.Add(asm);
             }
             return fRet;
@@ -342,7 +354,7 @@ namespace NetTrace
         /// <returns>True if it's currently registered</returns>
         private static bool FTypeRegistered(Type tp)
         {
-            return DctTypeToTypeInfo.ContainsKey(tp);
+            return DctEnumToEnumInfo.ContainsKey(tp);
         }
 
         /// <summary>
@@ -353,7 +365,7 @@ namespace NetTrace
         private static EnumInfo TtiRegisterType(Type tp)
         {
             EnumInfo tti = new(tp);
-            DctTypeToTypeInfo.Add(tp, tti);
+            DctEnumToEnumInfo.Add(tp, tti);
             return tti;
         }
 
@@ -364,7 +376,7 @@ namespace NetTrace
         /// <returns>EnumInfo for this enum</returns>
         private static EnumInfo TtiFromTp(Type tp)
         {
-            return FTypeRegistered(tp) ? DctTypeToTypeInfo[tp] : TtiRegisterType(tp);
+            return FTypeRegistered(tp) ? DctEnumToEnumInfo[tp] : TtiRegisterType(tp);
         }
 
         /// <summary>
@@ -386,7 +398,7 @@ namespace NetTrace
             foreach (var objEnum in Enum.GetValues(tp))
             {
                 var strFullName = GetFullName(tp, objEnum);
-                DctTagNameToTraceTypeInfo[strFullName] = tti;
+                DctTagNameToEnumInfo[strFullName] = tti;
 
                 // Initially set to true.  This will take care of any tags which
                 // haven't been previously registered and set them to true.  Any

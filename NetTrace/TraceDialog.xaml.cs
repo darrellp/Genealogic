@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
@@ -10,28 +10,15 @@ namespace NetTrace
     /// <summary>
     /// Interaction logic for TraceDialog.xaml
     /// </summary>
-    public partial class TraceDialog : Window
+    public partial class TraceDialog
     {
         #region Databound Variables
         // Databound arrays for our three listboxes. 
-        public ObservableCollection<DlgTagBinding> TagList { get; private set; }
-        private ObservableCollection<string> EnumsList { get; set; }
+        public ObservableCollection<DlgTagBinding> TagList { get; }
+        private ObservableCollection<string> EnumsList { get; }
         #endregion
 
         #region Properties
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>	Returns the collection of tag names. </summary>
-        ///
-        /// <value>	A list of names of the tags. </value>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        public ICollection<string> TagNames
-        {
-            get
-            {
-                return Tags.DctNamesToBinding.Keys;
-            }
-        }
-
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>	Gets the EnumInfo for the current enum trace type. </summary>
         ///
@@ -41,8 +28,8 @@ namespace NetTrace
         #endregion
 
         #region Private variables
-        private Brush EnumTagColor { get; set; }
-        private Brush NormalTagColor { get; set; }
+        private Brush EnumTagColor { get; }
+        private Brush NormalTagColor { get; }
         #endregion
 
         #region Constructor
@@ -55,6 +42,9 @@ namespace NetTrace
 
             // Binding for enums
             EnumsList = new ObservableCollection<string>();
+
+            Height = 300;
+            Width = 400;
 
             // We have to initialize component here or our dialog variables will be unset
             InitializeComponent();
@@ -96,7 +86,14 @@ namespace NetTrace
         /// ### <param name="strTag">	Tag name being queried. </param>
         /// ### <returns>	Whether the dialog has that tag turned on or off. </returns>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        public bool this[string strTag] => Tags.DctNamesToBinding[strTag].FOn;
+        public bool this[string strTag]
+        {
+            get
+            {
+                Debug.Assert(Tags.DctNamesToBinding != null, "Tags.DctNamesToBinding != null");
+                return Tags.DctNamesToBinding[strTag].FOn;
+            }
+        }
         #endregion
 
         private void SetEnumTags(bool fOn)
