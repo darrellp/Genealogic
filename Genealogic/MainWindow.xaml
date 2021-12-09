@@ -6,5 +6,7 @@
         xmlns:local="clr-namespace:Genealogic"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid/>
+    <Grid>
+        <Button x:Name="btnTraceDialog" Content="Trace Dialog" Click="TraceDialogClick" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    </Grid>
 </Window>

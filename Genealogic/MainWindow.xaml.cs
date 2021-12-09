@@ -8,23 +8,6 @@ using System.Windows;
 using NetTrace;
 using DAL;
 
-[TraceTags,
- // Optional Description of the enum to be used in the trace dialog
- EnumDesc("Tags in NetTraceTester")]
-internal enum t
-{
-    // Optionally, user can give descriptions for
-    // trace tags which will be used in the trace tags dialog.
-    // Any tags which don't have a description
-    // will use the enum name in the dialog.
-
-    [TagDesc("This is a test")]
-    Test,
-
-    [TagDesc("This message won't print")]
-    TestOff
-}
-
 namespace Genealogic
 {
     /// <summary>
@@ -32,6 +15,10 @@ namespace Genealogic
     /// </summary>
     public partial class MainWindow : Window
     {
+        INetTrace _tracer;
+        IGData _dal;
+        private IHost _host;
+
         public MainWindow()
         {
             // Configuration for .net projects is just a place to get a bunch of
@@ -59,7 +46,7 @@ namespace Genealogic
 
             // Dependency Injection depends on logging so all the above had to come before we set up
             // DI here.
-            var host = Host.CreateDefaultBuilder()
+            _host = Host.CreateDefaultBuilder()
                 .ConfigureServices((context, services) =>
                     {
                         // The interface and the class to retrieve for that interface
@@ -70,8 +57,8 @@ namespace Genealogic
                 .Build();
 
             // Get whatever class corresponds to IGreetingService from DI
-            var dal = ActivatorUtilities.CreateInstance<GData>(host.Services);
-            dal.GetData();
+            _dal = ActivatorUtilities.CreateInstance<GData>(_host.Services);
+            _tracer = ActivatorUtilities.CreateInstance<NetTrace.NetTrace>(_host.Services);
             InitializeComponent();
         }
 
@@ -88,6 +75,11 @@ namespace Genealogic
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
                 .AddEnvironmentVariables();
+        }
+
+        private void TraceDialogClick(object sender, RoutedEventArgs e)
+        {
+            _tracer.TraceDialog();
         }
     }
 }

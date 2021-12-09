@@ -36,11 +36,29 @@ namespace NetTrace
         private readonly Type _enumType;
 
         /// <summary>
-        /// TraceSettings structure which persists our data to user.config.
+        /// NetTraceSerializable structure which persists our data to user.config.
         /// </summary>
-        private static TraceSettings? _traceSettings;
+        private static NetTraceSerializable? _traceSerializable;
 
         public Type EnumType => _enumType;
+
+        internal static string GetJsonString(IEnumerable<EnumInfo> enumInfoList)
+        {
+            foreach (var enumInfo in enumInfoList)
+            {
+                enumInfo.SaveToPersistData();
+            }
+
+            Debug.Assert(_traceSerializable != null, nameof(_traceSerializable) + " != null");
+            var json =  _traceSerializable.ToJsonString();
+            return json;
+        }
+
+        internal static void SetJsonString(string json)
+        {
+            _traceSerializable = json == string.Empty ? new NetTraceSerializable() : NetTraceSerializable.FromJsonString(json);
+
+        }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>	
@@ -61,18 +79,18 @@ namespace NetTrace
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>	
-        /// Retrieves the TraceTagEnum object for this EnumInfo from the persistence data. 
+        /// Retrieves the EnumSerializable object for this EnumInfo from the persistence data. 
         /// </summary>
         ///
         /// <remarks>	Darrellp, 10/5/2012. </remarks>
         ///
-        /// <returns>	The TraceTagEnum or null if none found. </returns>
+        /// <returns>	The EnumSerializable or null if none found. </returns>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        TraceTagEnum? TraceTagEnumFromTraceSettings()
+        private EnumSerializable? EnumSerializableFromTraceSerializable()
         {
-            _traceSettings ??= new TraceSettings();
+            _traceSerializable ??= new NetTraceSerializable();
             var canonicalName = StrCanonicalTypeName(_enumType);
-            return _traceSettings.TagEnums.Find(tteTest => tteTest.StrName == canonicalName);
+            return _traceSerializable.Enums.Find(e => e.StrName == canonicalName);
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,19 +98,23 @@ namespace NetTrace
 		///
 		/// <remarks>	Darrellp, 10/5/2012. </remarks>
 		////////////////////////////////////////////////////////////////////////////////////////////////////
-		internal void SaveToPersistData(IConfiguration config)
+		internal void SaveToPersistData()
         {
-            var tte = TraceTagEnumFromTraceSettings();
-            if (tte == null)
+            var enumSerializable = EnumSerializableFromTraceSerializable();
+            if (enumSerializable == null)
             {
-                tte = new TraceTagEnum(StrCanonicalTypeName(_enumType), _dctTagNameToEnabled.Count);
-                _traceSettings?.TagEnums.Add(tte);
+                enumSerializable = new EnumSerializable()
+                {
+                    StrName = StrCanonicalTypeName(_enumType),
+                    TagList = new TagSerializable[_dctTagNameToEnabled.Count]
+                };
+                _traceSerializable?.Enums.Add(enumSerializable);
             }
             var iTag = 0;
             foreach (var strTag in _dctTagNameToEnabled.Keys)
             {
-                tte.ArttTags[iTag] = new TraceTag { StrName = strTag };
-                tte.ArttTags[iTag++].FOn = _dctTagNameToEnabled[strTag];
+                enumSerializable.TagList[iTag] = new TagSerializable { StrName = strTag };
+                enumSerializable.TagList[iTag++].FOn = _dctTagNameToEnabled[strTag];
             }
         }
 
@@ -111,16 +133,17 @@ namespace NetTrace
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         internal void LoadFromPersistData()
         {
-            var tte = TraceTagEnumFromTraceSettings();
-            if (tte == null)
+            var enumSerializable = EnumSerializableFromTraceSerializable();
+
+            if (enumSerializable == null)
             {
                 return;
             }
 
-            foreach (var ttg in tte.ArttTags)
+            foreach (var tag in enumSerializable.TagList)
             {
-                Debug.Assert(ttg.StrName != null, "ttg.StrName != null");
-                ChangeTagNameStatus(ttg.StrName, ttg.FOn);
+                Debug.Assert(tag.StrName != null, "ttg.StrName != null");
+                ChangeTagNameStatus(tag.StrName, tag.FOn);
             }
         }
 

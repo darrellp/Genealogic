@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Serilog;
@@ -54,6 +55,15 @@ namespace NetTrace
         {
             try
             {
+                var json = string.Empty;
+
+                // Get any values in the persist data, overriding the "true" value set above
+                if (File.Exists("NetTraceTagInfo.json"))
+                {
+                    json = File.ReadAllText("NetTraceTagInfo.json");
+                }
+                EnumInfo.SetJsonString(json);
+
                 foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
                 {
                     if (FPerformAsmCheck(asm))
@@ -86,7 +96,7 @@ namespace NetTrace
         ///
         /// <remarks>	Darrellp, 10/5/2012. </remarks>
         ///
-        /// <returns>	ICollection of EnumInfo. </returns>
+        /// <returns>	IEnumerable of EnumInfo. </returns>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         private static IEnumerable<EnumInfo> AllEnumInfos()
         {
@@ -216,10 +226,9 @@ namespace NetTrace
             }
 
             // Persist the changes
-            foreach (var tti in AllEnumInfos())
-            {
-                tti.SaveToPersistData(_config);
-            }
+            var json = EnumInfo.GetJsonString(AllEnumInfos());
+            File.WriteAllText("NetTraceTagInfo.json", json);
+
             // }
             //finally
             //{
@@ -227,7 +236,7 @@ namespace NetTrace
             //}
 
         }
-#endregion
+        #endregion
 
         #region Tracing
         /// <summary>
@@ -325,7 +334,7 @@ namespace NetTrace
         }
 
         private static void CheckAssemblyForTraceTags(Assembly asm)
-		{
+        {
             foreach (var tp in asm.GetTypes())
 			{
 				var fIsTagEnum = false;
@@ -340,7 +349,7 @@ namespace NetTrace
 				}
 				if (fIsTagEnum)
 				{
-					TtiFromTp(tp).SetDescs();
+					EnumInfoFromTp(tp).SetDescs();
 				}
 			}
 		}
@@ -362,11 +371,11 @@ namespace NetTrace
         /// </summary>
         /// <param name="tp">TraceTags enum to register</param>
         /// <returns>EnumInfo for newly registered TraceTags enum</returns>
-        private static EnumInfo TtiRegisterType(Type tp)
+        private static EnumInfo RegisterEnum(Type tp)
         {
-            EnumInfo tti = new(tp);
-            DctEnumToEnumInfo.Add(tp, tti);
-            return tti;
+            EnumInfo enumInfo = new(tp);
+            DctEnumToEnumInfo.Add(tp, enumInfo);
+            return enumInfo;
         }
 
         /// <summary>
@@ -374,9 +383,9 @@ namespace NetTrace
         /// </summary>
         /// <param name="tp">Enum to return info for</param>
         /// <returns>EnumInfo for this enum</returns>
-        private static EnumInfo TtiFromTp(Type tp)
+        private static EnumInfo EnumInfoFromTp(Type tp)
         {
-            return FTypeRegistered(tp) ? DctEnumToEnumInfo[tp] : TtiRegisterType(tp);
+            return FTypeRegistered(tp) ? DctEnumToEnumInfo[tp] : RegisterEnum(tp);
         }
 
         /// <summary>
@@ -394,22 +403,22 @@ namespace NetTrace
                 throw new ArgumentException(@"Non-enum type passed to Tracer.LoadTags()");
             }
 
-            var tti = TtiFromTp(tp);
+            var enumInfo = EnumInfoFromTp(tp);
             foreach (var objEnum in Enum.GetValues(tp))
             {
                 var strFullName = GetFullName(tp, objEnum);
-                DctTagNameToEnumInfo[strFullName] = tti;
+                DctTagNameToEnumInfo[strFullName] = enumInfo;
 
                 // Initially set to true.  This will take care of any tags which
                 // haven't been previously registered and set them to true.  Any
                 // tags in the persist data will overwrite this value in LoadFromPersistData.
-                tti.SetTagNameStatus(GetFullName(tti.EnumType, objEnum), true);
+                enumInfo.SetTagNameStatus(GetFullName(enumInfo.EnumType, objEnum), true);
                 //var fullName = tti.EnumType.FullName + "." + objEnum;
                 //tti.SetTagNameStatus(fullName, true);
             }
 
-            // Get any values in the persist data, overriding the "true" value set above.
-            tti.LoadFromPersistData();
+            // Get any values in the persist data, overriding the "true" value set above
+            enumInfo.LoadFromPersistData();
         }
         #endregion
 	}
