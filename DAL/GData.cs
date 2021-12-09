@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using NetTrace;
+using System.Data.SQLite;
 
 #region Trace Tag enums
 [TraceTags,
@@ -23,6 +24,7 @@ namespace DAL
     public interface IGData
     {
         string GetData();
+        bool CreateDBAt(string filename);
     }
     #endregion
 
@@ -47,6 +49,30 @@ namespace DAL
             _netTrace.TraceDialog();
             _netTrace.Trace(t.Load, "Loading DAL...");
             return "Here's a string!";
+        }
+
+        public bool CreateDBAt(string filename)
+        {
+            if (System.IO.File.Exists(filename))
+            {
+                return true;
+            }
+
+            using var connection = new SQLiteConnection($"Data Source={filename};");
+            connection.Open();  //  <== The database file is created here.
+            var command = connection.CreateCommand();
+
+            command.CommandText = 
+                @"CREATE TABLE People (
+                            Surname   TEXT,
+                            First TEXT,
+                            Last  TEXT,
+                            Birth REAL,
+                            Death REAL
+                        )";
+            command.ExecuteNonQuery();
+
+            return true;
         }
         #endregion
     }

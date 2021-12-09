@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace NetTrace
 {
+#pragma warning disable CS8618
     /// <summary>
     /// Contains all tag info for serialization
     /// </summary>
@@ -38,7 +39,7 @@ namespace NetTrace
             {
                 return JsonSerializer.Deserialize<NetTraceSerializable>(json);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return new NetTraceSerializable();
             }

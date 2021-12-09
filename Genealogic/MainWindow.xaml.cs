@@ -15,9 +15,9 @@ namespace Genealogic
     /// </summary>
     public partial class MainWindow : Window
     {
-        INetTrace _tracer;
-        IGData _dal;
-        private IHost _host;
+        readonly INetTrace _tracer;
+        readonly IGData _dal;
+        private readonly IHost _host;
 
         public MainWindow()
         {
@@ -59,6 +59,7 @@ namespace Genealogic
             // Get whatever class corresponds to IGreetingService from DI
             _dal = ActivatorUtilities.CreateInstance<GData>(_host.Services);
             _tracer = ActivatorUtilities.CreateInstance<NetTrace.NetTrace>(_host.Services);
+            _dal.CreateDBAt(@"d:\temp\test.glg");
             InitializeComponent();
         }
 

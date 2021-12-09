@@ -15,6 +15,7 @@ namespace NetTrace
         // ReSharper disable once UnusedMember.Global
         void SetTagStatus(object tag, bool fOn);
         void TraceDialog();
+        bool FTracing(object tag);
     }
     #endregion
 
@@ -245,9 +246,9 @@ namespace NetTrace
         /// 
         /// <param name="tag">Tag we're querying</param>
         /// <returns> true if we're tracing, else false </returns>
-        public static bool FTracing(object tag)
+        public bool FTracing(object tag)
         {
-            return TtiFromTag(tag).GetTagStatus(tag);
+            return EnumInfoFromTag(tag).GetTagStatus(tag);
         }
 
         /// <summary>
@@ -272,7 +273,7 @@ namespace NetTrace
         /// </summary>
         /// <param name="objTag">Tag object</param>
         /// <returns>EnumInfo for the tag object</returns>
-        private static EnumInfo TtiFromTag(object objTag)
+        private static EnumInfo EnumInfoFromTag(object objTag)
         {
             return DctEnumToEnumInfo[objTag.GetType()];
         }
@@ -282,7 +283,7 @@ namespace NetTrace
             var name = tag.ToString();
             if (name != null)
             {
-                TtiFromTag(tag).SetTagNameStatus(name, fOn);
+                EnumInfoFromTag(tag).SetTagNameStatus(name, fOn);
             }
         }
 
