@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
 
     <IsPackable>false</IsPackable>
@@ -15,7 +15,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\DAL\DAL.csproj" />
     <ProjectReference Include="..\..\GenealogicCore\GenealogicCore.csproj" />
+    <ProjectReference Include="..\..\Genealogic\Genealogic.csproj" />
   </ItemGroup>
 
 </Project>

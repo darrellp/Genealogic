@@ -6,12 +6,16 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GenealogicCore", "GenealogicCore\GenealogicCore.csproj", "{3333E209-8092-457B-BB17-83ABD2F000F7}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestGenealogy", "GenealogicTest\TestGenealogy\TestGenealogy.csproj", "{EADAEACC-04BC-4CB9-8591-FA0828A382FC}"
+	ProjectSection(ProjectDependencies) = postProject
+		{84F48776-E2F5-45A7-8829-C999EDE798AD} = {84F48776-E2F5-45A7-8829-C999EDE798AD}
+		{B0CF53A0-FCB4-4E9B-88BF-0F414CD9323E} = {B0CF53A0-FCB4-4E9B-88BF-0F414CD9323E}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Genealogic", "Genealogic\Genealogic.csproj", "{84F48776-E2F5-45A7-8829-C999EDE798AD}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DAL", "DAL\DAL.csproj", "{B0CF53A0-FCB4-4E9B-88BF-0F414CD9323E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetTrace", "NetTrace\NetTrace.csproj", "{705168B6-D484-4049-8EFC-E995716B727B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetTrace", "NetTrace\NetTrace.csproj", "{705168B6-D484-4049-8EFC-E995716B727B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using NetTrace;
 using System.Data.SQLite;
+using DAL.Models;
+using Dapper;
 
 #region Trace Tag enums
 [TraceTags,
@@ -15,6 +17,8 @@ internal enum t
 
     [TagDesc("Loading")]
     Load,
+    [TagDesc("Exception creation")]
+    Exceptions,
 }
 #endregion
 
@@ -23,16 +27,20 @@ namespace DAL
     #region Dependency Injection Interface
     public interface IGData
     {
-        string GetData();
         bool CreateDBAt(string filename);
+        bool WritePerson(Models.Person person);
+        Person GetPerson(int id);
+        bool DeletePerson(int id);
+        bool WritePeople(IEnumerable<Models.Person> people);
     }
     #endregion
 
     public class GData : IGData
     {
         #region Private Variables
-        private readonly INetTrace _netTrace;
+        public static INetTrace _netTrace;
         private readonly IConfiguration _config;
+        private string _connection;
         #endregion
 
         #region Constructor
@@ -40,39 +48,76 @@ namespace DAL
         {
             _netTrace = netTrace;
             _config = config;
+            _connection = string.Empty;
         }
         #endregion
 
         #region IGData members
-        public string GetData()
-        {
-            _netTrace.TraceDialog();
-            _netTrace.Trace(t.Load, "Loading DAL...");
-            return "Here's a string!";
-        }
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// <summary>   Creates database at a file location if it doesn't already exist. </summary>
+        ///
+        /// <remarks>   Darrell Plank, 12/9/2021. </remarks>
+        ///
+        /// <param name="filename"> The file to create. </param>
+        ///
+        /// <returns>   True if it succeeds, false if it fails. </returns>
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
 
         public bool CreateDBAt(string filename)
         {
+            _connection = $"Data Source={filename};";
             if (System.IO.File.Exists(filename))
             {
                 return true;
             }
 
-            using var connection = new SQLiteConnection($"Data Source={filename};");
+            using var connection = new SQLiteConnection(_connection);
             connection.Open();  //  <== The database file is created here.
             var command = connection.CreateCommand();
 
             command.CommandText = 
-                @"CREATE TABLE People (
-                            Surname   TEXT,
-                            First TEXT,
-                            Last  TEXT,
+                @"CREATE TABLE Individuals (
+                            Id INT,
+                            Surname TEXT,
+                            Given TEXT,
+                            Middle TEXT,
                             Birth REAL,
                             Death REAL
                         )";
             command.ExecuteNonQuery();
 
             return true;
+        }
+
+        public bool WritePerson(Person person)
+        {
+            if (_connection == string.Empty)
+            {
+                throw new DataAccessException("Writing without opening a file");
+            }
+            using var connection = new SQLiteConnection(_connection);
+            connection.Open();
+            const string sql = "INSERT INTO Individuals (Surname, Given, Middle) Values (@Surname, @Given, @Middle);";
+
+            connection.Execute(sql, person);
+            return true;
+        }
+
+        public Person GetPerson(int id)
+        {
+            using var connection = new SQLiteConnection(_connection);
+            connection.Open();
+            return connection.Query<Person>($"Select * from Individuals where Id = '{id}'").First();
+        }
+
+        public bool DeletePerson(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool WritePeople(IEnumerable<Person> people)
+        {
+            throw new NotImplementedException();
         }
         #endregion
     }

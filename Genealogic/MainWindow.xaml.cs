@@ -17,7 +17,7 @@ namespace Genealogic
     {
         readonly INetTrace _tracer;
         readonly IGData _dal;
-        private readonly IHost _host;
+        private static IHost _host;
 
         public MainWindow()
         {
