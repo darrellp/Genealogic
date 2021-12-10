@@ -92,18 +92,6 @@ namespace NetTrace
         #endregion
 
         #region Tags Dialog
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>	Return all the EnumInfo objects for all registered TraceTags enums. </summary>
-        ///
-        /// <remarks>	Darrellp, 10/5/2012. </remarks>
-        ///
-        /// <returns>	IEnumerable of EnumInfo. </returns>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        private static IEnumerable<EnumInfo> AllEnumInfos()
-        {
-            return DctEnumToEnumInfo.Values;
-        }
-
 #if FUTURE
         // Keeping this in because I may use it in the future if I decide to have more mutable data
         // about individual tags
@@ -128,6 +116,18 @@ namespace NetTrace
             }
         }
 #endif
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// <summary>	Return all the EnumInfo objects for all registered TraceTags enums. </summary>
+        ///
+        /// <remarks>	Darrellp, 10/5/2012. </remarks>
+        ///
+        /// <returns>	IEnumerable of EnumInfo. </returns>
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        private static IEnumerable<EnumInfo> AllEnumInfos()
+        {
+            return DctEnumToEnumInfo.Values;
+        }
 
         internal static string GetFullName(Type tp, object objEnum)
         {
@@ -267,7 +267,7 @@ namespace NetTrace
         }
         #endregion
 
-        #region TTI Info
+        #region EnumInfo stuff
         /// <summary>
         /// Retrieves the EnumInfo from the tag object
         /// </summary>
@@ -414,8 +414,6 @@ namespace NetTrace
                 // haven't been previously registered and set them to true.  Any
                 // tags in the persist data will overwrite this value in LoadFromPersistData.
                 enumInfo.SetTagNameStatus(GetFullName(enumInfo.EnumType, objEnum), true);
-                //var fullName = tti.EnumType.FullName + "." + objEnum;
-                //tti.SetTagNameStatus(fullName, true);
             }
 
             // Get any values in the persist data, overriding the "true" value set above

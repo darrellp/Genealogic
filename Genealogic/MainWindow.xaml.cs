@@ -15,11 +15,11 @@ namespace Genealogic
     /// </summary>
     public partial class MainWindow : Window
     {
-        readonly INetTrace _tracer;
-        readonly IGData _dal;
-        private static IHost _host;
+        internal static INetTrace Tracer { get; }
+        internal static IGData Dal { get; }
+        private static readonly IHost _host;
 
-        public MainWindow()
+        static MainWindow()
         {
             // Configuration for .net projects is just a place to get a bunch of
             // key indexed values from to affect the running of the program.  There are
@@ -48,18 +48,60 @@ namespace Genealogic
             // DI here.
             _host = Host.CreateDefaultBuilder()
                 .ConfigureServices((context, services) =>
-                    {
-                        // The interface and the class to retrieve for that interface
-                        services.AddSingleton<INetTrace, NetTrace.NetTrace>();
-                        services.AddSingleton<IGData, GData>();
-                    })
+                {
+                    // The interface and the class to retrieve for that interface
+                    services.AddSingleton<INetTrace, NetTrace.NetTrace>();
+                    services.AddSingleton<IGData, GData>();
+                })
                 .UseSerilog(Log.Logger)
                 .Build();
 
             // Get whatever class corresponds to IGreetingService from DI
-            _dal = ActivatorUtilities.CreateInstance<GData>(_host.Services);
-            _tracer = ActivatorUtilities.CreateInstance<NetTrace.NetTrace>(_host.Services);
-            _dal.CreateDBAt(@"d:\temp\test.glg");
+            Dal = ActivatorUtilities.CreateInstance<GData>(_host.Services);
+            Tracer = ActivatorUtilities.CreateInstance<NetTrace.NetTrace>(_host.Services);
+        }
+
+        public MainWindow()
+        {
+            //// Configuration for .net projects is just a place to get a bunch of
+            //// key indexed values from to affect the running of the program.  There are
+            //// a number of places these values can some from.  The most common in Core is
+            //// from appsettings.json.  They can also be specified in environment variables
+            //// or from a json file specific to a build config type such as DEBUG or PRODUCTION.
+            //// "Building" a ConfigurationBuilder means to specify these various sources and
+            //// who trumps who.  So if "connectionString" is defined both in appsettings.json and
+            //// in an environment variable named "connectionString" which will we ultimately
+            //// choose from? Here, that is all determined in the BuildConfig() function below.
+            //var configBuilder = new ConfigurationBuilder();
+            //BuildConfig(configBuilder);
+            //var config = configBuilder.Build();
+
+            //// The reason we wanted all the config information is because the logger gets some of
+            //// it's information from the config file so we have to pass down the ConfigurationBuilder
+            //// object to the Configuration() method when setting up the logger.
+            //Log.Logger = new LoggerConfiguration()
+            //    .ReadFrom.Configuration(config)
+            //    .Enrich.FromLogContext()
+            //    // WriteTo is specified in the appsettings.json file
+            //    //.WriteTo.Debug()
+            //    .CreateLogger();
+
+            //// Dependency Injection depends on logging so all the above had to come before we set up
+            //// DI here.
+            //_host = Host.CreateDefaultBuilder()
+            //    .ConfigureServices((context, services) =>
+            //        {
+            //            // The interface and the class to retrieve for that interface
+            //            services.AddSingleton<INetTrace, NetTrace.NetTrace>();
+            //            services.AddSingleton<IGData, GData>();
+            //        })
+            //    .UseSerilog(Log.Logger)
+            //    .Build();
+
+            //// Get whatever class corresponds to IGreetingService from DI
+            //_dal = ActivatorUtilities.CreateInstance<GData>(_host.Services);
+            //_tracer = ActivatorUtilities.CreateInstance<NetTrace.NetTrace>(_host.Services);
+            Dal.CreateDBAt(@"d:\temp\test.glg");
             InitializeComponent();
         }
 
@@ -80,7 +122,7 @@ namespace Genealogic
 
         private void TraceDialogClick(object sender, RoutedEventArgs e)
         {
-            _tracer.TraceDialog();
+            Tracer.TraceDialog();
         }
     }
 }

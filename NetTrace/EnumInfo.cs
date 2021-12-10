@@ -106,10 +106,11 @@ namespace NetTrace
                 enumSerializable = new EnumSerializable()
                 {
                     StrName = StrCanonicalTypeName(_enumType),
-                    TagList = new TagSerializable[_dctTagNameToEnabled.Count]
                 };
                 _traceSerializable?.Enums.Add(enumSerializable);
             }
+            enumSerializable.TagList = new TagSerializable[_dctTagNameToEnabled.Count];
+
             var iTag = 0;
             foreach (var strTag in _dctTagNameToEnabled.Keys)
             {
