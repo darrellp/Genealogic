@@ -85,13 +85,13 @@ namespace DAL
 
             command.CommandText =
                 @"CREATE TABLE Individuals (
+                            Id INTEGER PRIMARY KEY AUTOINCREMENT,
                             Surname TEXT,
                             Given TEXT,
                             Middle TEXT,
                             Birth REAL,
                             Death REAL
-                        );
-                ALTER TABLE Individuals ADD Id INT IDENTITY(1,1)";
+                        );";
             command.ExecuteNonQuery();
 
             return true;
