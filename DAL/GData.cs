@@ -19,9 +19,15 @@ internal enum t
 namespace DAL
 {
     #region Dependency Injection Interface
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// <summary>   Interface for the data access layer. </summary>
+    ///
+    /// <remarks>   Darrell Plank, 12/11/2021. </remarks>
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public interface IGData
     {
-        bool UseDBAt(string filename);
+        bool UseDbAt(string filename);
         bool WritePerson(Models.Person person);
         Person GetPerson(long id);
         bool DeletePerson(long id);
@@ -44,30 +50,27 @@ namespace DAL
         {
             _netTrace = netTrace;
             _config = config;
+            AppDomain.CurrentDomain.ProcessExit += (s, e) => _dbConnection?.Dispose();
         }
         #endregion
 
         #region IGData members
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Creates database at a file location if it doesn't already exist. </summary>
+        /// <summary>   Creates and uses database at a file location if it doesn't already exist. </summary>
         ///
         /// <remarks>   Darrell Plank, 12/9/2021. </remarks>
         ///
-        /// <param name="filename"> The file to create. </param>
+        /// <param name="filename"> The file to create/use. </param>
         ///
         /// <returns>   True if it succeeds, false if it fails. </returns>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        public bool UseDBAt(string filename)
+        public bool UseDbAt(string filename)
         {
             var filePreExisted = File.Exists(filename);
-            if (_dbConnection == null)
+            if (_dbConnection != null)
             {
-                AppDomain.CurrentDomain.ProcessExit += (s, e) => _dbConnection?.Dispose();
-            }
-            else
-            {
-                _dbConnection.Dispose();
+                CloseDb();
             }
 
             var strConnection = $"Data Source={filename};";
@@ -94,6 +97,12 @@ namespace DAL
             return true;
         }
 
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// <summary>   Closes the database. </summary>
+        ///
+        /// <remarks>   Darrell Plank, 12/11/2021. </remarks>
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+
         public void CloseDb()
         {
             _dbConnection?.Dispose();
@@ -108,6 +117,16 @@ namespace DAL
             }
         }
 
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// <summary>   Writes a person into the DB. </summary>
+        ///
+        /// <remarks>   Darrell Plank, 12/11/2021. </remarks>
+        ///
+        /// <param name="person">   The person. </param>
+        ///
+        /// <returns>   True if it succeeds, false if it fails. </returns>
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+
         public bool WritePerson(Person person)
         {
             CheckDb();
@@ -119,11 +138,31 @@ namespace DAL
             return true;
         }
 
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// <summary>   Gets a person from the Db. </summary>
+        ///
+        /// <remarks>   Darrell Plank, 12/11/2021. </remarks>
+        ///
+        /// <param name="id">   The identifier for the person. </param>
+        ///
+        /// <returns>   The person. </returns>
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+
         public Person GetPerson(long id)
         {
             CheckDb();
             return _dbConnection.Query<Person>($"Select * from Individuals where Id = '{id}'").First();
         }
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// <summary>   Deletes the person described by ID. </summary>
+        ///
+        /// <remarks>   Darrell Plank, 12/11/2021. </remarks>
+        ///
+        /// <param name="id">   The identifier for the person. </param>
+        ///
+        /// <returns>   True if it succeeds, false if it fails. </returns>
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
 
         public bool DeletePerson(long id)
         {
@@ -133,6 +172,16 @@ namespace DAL
             return true;
         }
 
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// <summary>   Writes a list of people to the DB. </summary>
+        ///
+        /// <remarks>   Darrell Plank, 12/11/2021. </remarks>
+        ///
+        /// <param name="people">   The people to write. </param>
+        ///
+        /// <returns>   True if it succeeds, false if it fails. </returns>
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+
         public bool WritePeople(IEnumerable<Person> people)
         {
             CheckDb();
@@ -140,6 +189,14 @@ namespace DAL
             _dbConnection.Execute(sql, people);
             return true;
         }
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// <summary>   Count the number of people in the DB. </summary>
+        ///
+        /// <remarks>   Darrell Plank, 12/11/2021. </remarks>
+        ///
+        /// <returns>   The total number of people. </returns>
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
 
         public long CountPeople()
         {

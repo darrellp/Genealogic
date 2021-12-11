@@ -36,7 +36,7 @@ namespace TestGenealogy
                 .With(c => c.Surname = Faker.Name.Last())
                 .With(c => c.MiddleName = Faker.Name.Middle())
                 .Build();
-            Dal.UseDBAt(DbPopulateName);
+            Dal.UseDbAt(DbPopulateName);
             // So we have at least one person we know in there
             people.Add(new Person() { GivenName = "Darrell", MiddleName = "Alan", Surname = "Plank" });
             Dal.WritePeople(people);
@@ -52,7 +52,7 @@ namespace TestGenealogy
                 File.Delete(DbCreationName);
             }
 
-            Dal.UseDBAt(DbCreationName); 
+            Dal.UseDbAt(DbCreationName); 
             Assert.IsTrue(File.Exists(DbCreationName));
 
             // I cannot close the database and delete it because File.Delete() claims
@@ -67,7 +67,7 @@ namespace TestGenealogy
         [TestMethod]
         public void TestGetPerson()
         {
-            Dal.UseDBAt(DbPopulateName);
+            Dal.UseDbAt(DbPopulateName);
             var me = Dal.GetPerson(CIndividuals);
             Assert.AreEqual("Plank", me.Surname );
             Assert.AreEqual("Darrell", me.GivenName );
@@ -77,7 +77,7 @@ namespace TestGenealogy
         [TestMethod]
         public void TestWritePerson()
         {
-            Dal.UseDBAt(DbPopulateName);
+            Dal.UseDbAt(DbPopulateName);
             var person = new Person() { GivenName = "Sara", MiddleName = "Drew", Surname = "Jackson" };
             Dal.WritePerson(person);
             var readPerson = Dal.GetPerson(person.Id);
@@ -91,7 +91,7 @@ namespace TestGenealogy
         [TestMethod]
         public void TestCountPeople()
         {
-            Dal.UseDBAt(DbPopulateName);
+            Dal.UseDbAt(DbPopulateName);
             Assert.AreEqual(CIndividuals, Dal.CountPeople());
         }
         #endregion

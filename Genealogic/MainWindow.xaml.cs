@@ -101,7 +101,7 @@ namespace Genealogic
             //// Get whatever class corresponds to IGreetingService from DI
             //_dal = ActivatorUtilities.CreateInstance<GData>(_host.Services);
             //_tracer = ActivatorUtilities.CreateInstance<NetTrace.NetTrace>(_host.Services);
-            Dal.UseDBAt(@"c:\temp\test.glg");
+            Dal.UseDbAt(@"c:\temp\test.glg");
             InitializeComponent();
         }
 
