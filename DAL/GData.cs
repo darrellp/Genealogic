@@ -6,15 +6,9 @@ using Dapper;
 
 #region Trace Tag enums
 [TraceTags,
- // Optional Description of the enum to be used in the trace dialog
  EnumDesc("Tags in DAL")]
 internal enum t
 {
-    // Optionally, user can give descriptions for
-    // trace tags which will be used in the trace tags dialog.
-    // Any tags which don't have a description
-    // will use the enum name in the dialog.
-
     [TagDesc("Loading")]
     Load,
     [TagDesc("Exception creation")]
@@ -40,7 +34,7 @@ namespace DAL
         #region Private Variables
         public static INetTrace _netTrace;
         private readonly IConfiguration _config;
-        private string _connection;
+        private string _strConnection;
         #endregion
 
         #region Constructor
@@ -48,7 +42,7 @@ namespace DAL
         {
             _netTrace = netTrace;
             _config = config;
-            _connection = string.Empty;
+            _strConnection = string.Empty;
         }
         #endregion
 
@@ -65,25 +59,25 @@ namespace DAL
 
         public bool CreateDBAt(string filename)
         {
-            _connection = $"Data Source={filename};";
+            _strConnection = $"Data Source={filename};";
             if (System.IO.File.Exists(filename))
             {
                 return true;
             }
 
-            using var connection = new SQLiteConnection(_connection);
+            using var connection = new SQLiteConnection(_strConnection);
             connection.Open();  //  <== The database file is created here.
             var command = connection.CreateCommand();
 
-            command.CommandText = 
+            command.CommandText =
                 @"CREATE TABLE Individuals (
-                            Id INT,
                             Surname TEXT,
                             Given TEXT,
                             Middle TEXT,
                             Birth REAL,
                             Death REAL
-                        )";
+                        );
+                ALTER TABLE Individuals ADD Id INT IDENTITY(1,1)";
             command.ExecuteNonQuery();
 
             return true;
@@ -91,21 +85,20 @@ namespace DAL
 
         public bool WritePerson(Person person)
         {
-            if (_connection == string.Empty)
+            if (_strConnection == string.Empty)
             {
                 throw new DataAccessException("Writing without opening a file");
             }
-            using var connection = new SQLiteConnection(_connection);
+            using var connection = new SQLiteConnection(_strConnection);
             connection.Open();
-            const string sql = "INSERT INTO Individuals (Surname, Given, Middle) Values (@Surname, @Given, @Middle);";
-
+            const string sql = "INSERT INTO Individuals (Surname, Given, Middle) VALUES (@Surname, @GivenName, @MiddleName);";
             connection.Execute(sql, person);
             return true;
         }
 
         public Person GetPerson(int id)
         {
-            using var connection = new SQLiteConnection(_connection);
+            using var connection = new SQLiteConnection(_strConnection);
             connection.Open();
             return connection.Query<Person>($"Select * from Individuals where Id = '{id}'").First();
         }
@@ -117,7 +110,15 @@ namespace DAL
 
         public bool WritePeople(IEnumerable<Person> people)
         {
-            throw new NotImplementedException();
+            if (_strConnection == string.Empty)
+            {
+                throw new DataAccessException("Writing without opening a file");
+            }
+            using var connection = new SQLiteConnection(_strConnection);
+            connection.Open();
+            const string sql = "INSERT INTO Individuals (Surname, Given, Middle) VALUES (@Surname, @GivenName, @MiddleName);";
+            connection.Execute(sql, people);
+            return true;
         }
         #endregion
     }
