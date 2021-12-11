@@ -8,7 +8,7 @@ namespace DAL.Models
 {
     public class Person
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public string? Surname { get; set; }
         public string? GivenName { get; set; }
         public string? MiddleName { get; set; }

@@ -23,9 +23,11 @@ namespace DAL
     {
         bool UseDBAt(string filename);
         bool WritePerson(Models.Person person);
-        Person GetPerson(int id);
-        bool DeletePerson(int id);
+        Person GetPerson(long id);
+        bool DeletePerson(long id);
         bool WritePeople(IEnumerable<Models.Person> people);
+        void CloseDb();
+        long CountPeople();
     }
     #endregion
 
@@ -43,10 +45,6 @@ namespace DAL
             _netTrace = netTrace;
             _config = config;
         }
-        #endregion
-
-        #region Event Handlers
-
         #endregion
 
         #region IGData members
@@ -96,40 +94,57 @@ namespace DAL
             return true;
         }
 
-        public bool WritePerson(Person person)
+        public void CloseDb()
+        {
+            _dbConnection?.Dispose();
+            _dbConnection = null;
+        }
+
+        private void CheckDb()
         {
             if (_dbConnection == null)
             {
-                throw new DataAccessException("Writing without opening a file");
+                throw new DataAccessException("Accessing database without opening a file");
             }
-            const string sql = "INSERT INTO Individuals (Surname, GivenName, MiddleName) VALUES (@Surname, @GivenName, @MiddleName);";
-            _dbConnection.Execute(sql, person);
+        }
+
+        public bool WritePerson(Person person)
+        {
+            CheckDb();
+            const string sql = @"INSERT INTO Individuals
+                                    (Surname, GivenName, MiddleName) VALUES 
+                                    (@Surname, @GivenName, @MiddleName);
+                                    select last_insert_rowid();";
+            person.Id = _dbConnection.Query<long>(sql, person).First();
             return true;
         }
 
-        public Person GetPerson(int id)
+        public Person GetPerson(long id)
         {
-            if (_dbConnection == null)
-            {
-                throw new DataAccessException("Writing without opening a file");
-            }
+            CheckDb();
             return _dbConnection.Query<Person>($"Select * from Individuals where Id = '{id}'").First();
         }
 
-        public bool DeletePerson(int id)
+        public bool DeletePerson(long id)
         {
-            throw new NotImplementedException();
+            CheckDb();
+            var sql = $"DELETE FROM Individuals WHERE Id='{id}'";
+            _dbConnection.Execute(sql);
+            return true;
         }
 
         public bool WritePeople(IEnumerable<Person> people)
         {
-            if (_dbConnection == null)
-            {
-                throw new DataAccessException("Writing without opening a file");
-            }
+            CheckDb();
             const string sql = "INSERT INTO Individuals (Surname, GivenName, MiddleName) VALUES (@Surname, @GivenName, @MiddleName);";
             _dbConnection.Execute(sql, people);
             return true;
+        }
+
+        public long CountPeople()
+        {
+            const string sql = "SELECT COUNT(Id) FROM Individuals;";
+            return _dbConnection.Query<long>(sql).First();
         }
         #endregion
     }
