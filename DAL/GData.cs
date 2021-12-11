@@ -21,7 +21,7 @@ namespace DAL
     #region Dependency Injection Interface
     public interface IGData
     {
-        bool CreateDBAt(string filename);
+        bool UseDBAt(string filename);
         bool WritePerson(Models.Person person);
         Person GetPerson(int id);
         bool DeletePerson(int id);
@@ -34,7 +34,6 @@ namespace DAL
         #region Private Variables
         public static INetTrace _netTrace;
         private readonly IConfiguration _config;
-        private string _strConnection;
         private SQLiteConnection? _dbConnection;
         #endregion
 
@@ -43,7 +42,6 @@ namespace DAL
         {
             _netTrace = netTrace;
             _config = config;
-            _strConnection = string.Empty;
         }
         #endregion
 
@@ -62,8 +60,9 @@ namespace DAL
         /// <returns>   True if it succeeds, false if it fails. </returns>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        public bool CreateDBAt(string filename)
+        public bool UseDBAt(string filename)
         {
+            var filePreExisted = File.Exists(filename);
             if (_dbConnection == null)
             {
                 AppDomain.CurrentDomain.ProcessExit += (s, e) => _dbConnection?.Dispose();
@@ -73,22 +72,22 @@ namespace DAL
                 _dbConnection.Dispose();
             }
 
-            _strConnection = $"Data Source={filename};";
-            if (File.Exists(filename))
+            var strConnection = $"Data Source={filename};";
+            _dbConnection = new SQLiteConnection(strConnection);
+            _dbConnection.Open();
+            if (filePreExisted)
             {
                 return true;
             }
 
-            _dbConnection = new SQLiteConnection(_strConnection);
-            _dbConnection.Open();  //  <== The database file is created here.
             var command = _dbConnection.CreateCommand();
 
             command.CommandText =
                 @"CREATE TABLE Individuals (
                             Id INTEGER PRIMARY KEY AUTOINCREMENT,
                             Surname TEXT,
-                            Given TEXT,
-                            Middle TEXT,
+                            GivenName TEXT,
+                            MiddleName TEXT,
                             Birth REAL,
                             Death REAL
                         );";
@@ -103,7 +102,7 @@ namespace DAL
             {
                 throw new DataAccessException("Writing without opening a file");
             }
-            const string sql = "INSERT INTO Individuals (Surname, Given, Middle) VALUES (@Surname, @GivenName, @MiddleName);";
+            const string sql = "INSERT INTO Individuals (Surname, GivenName, MiddleName) VALUES (@Surname, @GivenName, @MiddleName);";
             _dbConnection.Execute(sql, person);
             return true;
         }
@@ -128,7 +127,7 @@ namespace DAL
             {
                 throw new DataAccessException("Writing without opening a file");
             }
-            const string sql = "INSERT INTO Individuals (Surname, Given, Middle) VALUES (@Surname, @GivenName, @MiddleName);";
+            const string sql = "INSERT INTO Individuals (Surname, GivenName, MiddleName) VALUES (@Surname, @GivenName, @MiddleName);";
             _dbConnection.Execute(sql, people);
             return true;
         }

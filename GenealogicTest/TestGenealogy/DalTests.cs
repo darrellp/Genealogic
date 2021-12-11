@@ -32,7 +32,7 @@ namespace TestGenealogy
                 .With(c => c.Surname = Faker.Name.Last())
                 .With(c => c.MiddleName = Faker.Name.Middle())
                 .Build();
-            Dal.CreateDBAt(DbPopulateName);
+            Dal.UseDBAt(DbPopulateName);
             // So we have at least one person we know in there
             people.Add(new Person() { GivenName = "Darrell", MiddleName = "Alan", Surname = "Plank" });
             Dal.WritePeople(people);
@@ -46,8 +46,18 @@ namespace TestGenealogy
                 File.Delete(DbCreationName);
             }
 
-            Dal.CreateDBAt(DbCreationName); 
+            Dal.UseDBAt(DbCreationName); 
             Assert.IsTrue(File.Exists(DbCreationName));
+        }
+
+        [TestMethod]
+        public void TestGetPerson()
+        {
+            Dal.UseDBAt(DbPopulateName);
+            var me = Dal.GetPerson(CIndividuals + 1);
+            Assert.AreEqual("Plank", me.Surname );
+            Assert.AreEqual("Darrell", me.GivenName );
+            Assert.AreEqual("Alan", me.MiddleName );
         }
     }
 }
