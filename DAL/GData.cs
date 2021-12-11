@@ -35,15 +35,20 @@ namespace DAL
         public static INetTrace _netTrace;
         private readonly IConfiguration _config;
         private string _strConnection;
+        private SQLiteConnection? _dbConnection;
         #endregion
 
-        #region Constructor
+        #region Constructors
         public GData(INetTrace netTrace, IConfiguration config)
         {
             _netTrace = netTrace;
             _config = config;
             _strConnection = string.Empty;
         }
+        #endregion
+
+        #region Event Handlers
+
         #endregion
 
         #region IGData members
@@ -59,15 +64,24 @@ namespace DAL
 
         public bool CreateDBAt(string filename)
         {
+            if (_dbConnection == null)
+            {
+                AppDomain.CurrentDomain.ProcessExit += (s, e) => _dbConnection?.Dispose();
+            }
+            else
+            {
+                _dbConnection.Dispose();
+            }
+
             _strConnection = $"Data Source={filename};";
-            if (System.IO.File.Exists(filename))
+            if (File.Exists(filename))
             {
                 return true;
             }
 
-            using var connection = new SQLiteConnection(_strConnection);
-            connection.Open();  //  <== The database file is created here.
-            var command = connection.CreateCommand();
+            _dbConnection = new SQLiteConnection(_strConnection);
+            _dbConnection.Open();  //  <== The database file is created here.
+            var command = _dbConnection.CreateCommand();
 
             command.CommandText =
                 @"CREATE TABLE Individuals (
@@ -85,22 +99,22 @@ namespace DAL
 
         public bool WritePerson(Person person)
         {
-            if (_strConnection == string.Empty)
+            if (_dbConnection == null)
             {
                 throw new DataAccessException("Writing without opening a file");
             }
-            using var connection = new SQLiteConnection(_strConnection);
-            connection.Open();
             const string sql = "INSERT INTO Individuals (Surname, Given, Middle) VALUES (@Surname, @GivenName, @MiddleName);";
-            connection.Execute(sql, person);
+            _dbConnection.Execute(sql, person);
             return true;
         }
 
         public Person GetPerson(int id)
         {
-            using var connection = new SQLiteConnection(_strConnection);
-            connection.Open();
-            return connection.Query<Person>($"Select * from Individuals where Id = '{id}'").First();
+            if (_dbConnection == null)
+            {
+                throw new DataAccessException("Writing without opening a file");
+            }
+            return _dbConnection.Query<Person>($"Select * from Individuals where Id = '{id}'").First();
         }
 
         public bool DeletePerson(int id)
@@ -110,14 +124,12 @@ namespace DAL
 
         public bool WritePeople(IEnumerable<Person> people)
         {
-            if (_strConnection == string.Empty)
+            if (_dbConnection == null)
             {
                 throw new DataAccessException("Writing without opening a file");
             }
-            using var connection = new SQLiteConnection(_strConnection);
-            connection.Open();
             const string sql = "INSERT INTO Individuals (Surname, Given, Middle) VALUES (@Surname, @GivenName, @MiddleName);";
-            connection.Execute(sql, people);
+            _dbConnection.Execute(sql, people);
             return true;
         }
         #endregion
