@@ -31,7 +31,7 @@ namespace DAL
         bool WritePerson(Models.Person person);
         Person GetPerson(long id);
         bool DeletePerson(long id);
-        bool WritePeople(IEnumerable<Models.Person> people);
+        bool WritePeople(IList<Models.Person> people);
         void CloseDb();
         long CountPeople();
     }
@@ -56,7 +56,7 @@ namespace DAL
 
         #region IGData members
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Creates and uses database at a file location if it doesn't already exist. </summary>
+        /// <summary>   Creates if necessary and connects to database at a file location. </summary>
         ///
         /// <remarks>   Darrell Plank, 12/9/2021. </remarks>
         ///
@@ -139,6 +139,30 @@ namespace DAL
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// <summary>   Writes a list of people to the DB. </summary>
+        ///
+        /// <remarks>   Darrell Plank, 12/11/2021. </remarks>
+        ///
+        /// <param name="people">   The people to write. </param>
+        ///
+        /// <returns>   True if it succeeds, false if it fails. </returns>
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        public bool WritePeople(IList<Person> people)
+        {
+            // Quickly coming to the realization that there is no good way to use Dapper to quickly insert a sequence
+            // of elements and retrieve back their autoincrement IDs.  There is a faster way in my LinqPad query to do
+            // this but it doesn't return back ids I don't believe.  If this becomes necessary I may have to resort to some
+            // more primitive non-dapper ADO like method.  Meantime, this will work but no IDs returned.  We should also think
+            // about asynch processing to make this stuff at least "appear" fast.
+            CheckDb();
+            const string sql = "INSERT INTO Individuals (Surname, GivenName, MiddleName) VALUES (@Surname, @GivenName, @MiddleName);";
+            _dbConnection.Execute(sql, people);
+
+            return true;
+        }
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Gets a person from the Db. </summary>
         ///
         /// <remarks>   Darrell Plank, 12/11/2021. </remarks>
@@ -169,24 +193,6 @@ namespace DAL
             CheckDb();
             var sql = $"DELETE FROM Individuals WHERE Id='{id}'";
             _dbConnection.Execute(sql);
-            return true;
-        }
-
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Writes a list of people to the DB. </summary>
-        ///
-        /// <remarks>   Darrell Plank, 12/11/2021. </remarks>
-        ///
-        /// <param name="people">   The people to write. </param>
-        ///
-        /// <returns>   True if it succeeds, false if it fails. </returns>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        public bool WritePeople(IEnumerable<Person> people)
-        {
-            CheckDb();
-            const string sql = "INSERT INTO Individuals (Surname, GivenName, MiddleName) VALUES (@Surname, @GivenName, @MiddleName);";
-            _dbConnection.Execute(sql, people);
             return true;
         }
 
